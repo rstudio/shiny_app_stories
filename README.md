@@ -9,6 +9,6 @@ App to explore seasonal weather patterns in a city of choice.
 
 __Highlights:__
 
-- `shiny::bindCache()`
+- `shiny::{bindCache(), renderCachedPlot()`
 - `bslib::{bs_theme(), run_with_themer()}`
   
