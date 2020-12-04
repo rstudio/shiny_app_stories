@@ -6,13 +6,21 @@ library(ggtext)
 
 source('helpers.R')
 
-thematic_on(font = "auto")
-
+# Builds theme object to be supplied to ui
 my_theme <- bs_theme(
   bootswatch = "cerulean",
   base_font = font_google("Righteous"),
   "font-size-base" = "1.1rem"
 )
+# Let thematic know to use the font from bs_lib
+thematic_on(font = "auto")
+
+labeled_input <- function(id, label, input){
+  div(id = id,
+      class = "labeled_input",
+      span(label),
+      input)
+}
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -20,30 +28,53 @@ ui <- fluidPage(
     tags$head(
       # Some css that makes everything above plot center aligned
       tags$style(HTML("
-       #header {
+      #header,           
+      .labeled_input {
         display: grid;
+        justify-items: center;
+      }
+      
+      #header {
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(2, 1fr);
-        justify-items: center;
         align-items: flex-start;
       }
 
-      #header > h2 { grid-area: 1 / 1 / 2 / 4; }
-      #prev_city { grid-area: 2 / 1 / 3 / 2; }
-      .shiny-input-container { grid-area: 2 / 2 / 3 / 3; }
-      #rnd_city { grid-area: 2 / 3 / 3 / 4; }
+      #header > h2   { grid-area: 1 / 1 / 2 / 4; }
+      #city-selector { grid-area: 2 / 2 / 3 / 3; }
+      #prev_city_btn { grid-area: 2 / 1 / 3 / 2; }
+      #rnd_city_btn  { grid-area: 2 / 3 / 3 / 4; }
+      
+      .labeled_input > span { font-size: small; }
+      button { width: 200px; }
+      button > div {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      
     "))),
-    # Application title
     div(id = "header",
       titlePanel("Explore your weather"),
-      selectizeInput('city', 
-                     label = NULL,
-                     choices = unique_cities, 
-                     selected = "Ann Arbor, MI", 
-                     multiple = FALSE),
-      actionButton('prev_city', textOutput('prev_city_label')),
-      actionButton('rnd_city', "Random City")
-      
+      labeled_input(
+        'city-selector', 
+        "Search for a city",
+        selectizeInput('city', 
+                        label = NULL,
+                        choices = unique_cities, 
+                        selected = "Ann Arbor, MI", 
+                        multiple = FALSE)
+      ),
+      labeled_input(
+        "prev_city_btn", 
+        "Return to previous city",
+        actionButton('prev_city', textOutput('prev_city_label'))
+      ),
+      labeled_input(
+        "rnd_city_btn", 
+        "Try a random city",
+        actionButton('rnd_city', HTML("&#127922"))
+      )
     ),
     plotOutput("tempPlot")
 )
