@@ -17,6 +17,10 @@ library(here)
 station_to_city <- read_rds(here("data/station_to_city.rds"))
 unique_cities <- unique(station_to_city$city)
 
+get_random_city <- function(){
+  sample(unique_cities, 1)
+}
+
 # Look through raw text downloaded from NOAA servers for a given station and
 # extract the table for the desired data_id text as a dataframe
 extract_month_level_data <- function(data_id, file_lines){
