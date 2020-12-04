@@ -6,7 +6,7 @@ library(ggtext)
 
 source('helpers.R')
 
-thematic_on(font = "Montserrat")
+thematic_on(font = "auto")
 
 my_theme <- bs_theme(
   bootswatch = "cerulean",
