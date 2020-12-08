@@ -76,34 +76,40 @@ ui <- fluidPage(
         actionButton('rnd_city', HTML("&#127922"))
       )
     ),
-    plotOutput("tempPlot")
+    plotOutput("tempPlot"),
+    plotOutput("prcpPlot")
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
   city_data <- reactive({
-    validate(
-      need(input$city != '', 'Search for your city')
-    )
+    validate(need(input$city != '', 'Search for your city'))
     
     # Find correct station id
     station_info <- filter(station_to_city, city == input$city)
-    query_result <- NULL
+
+    temp_data <- NULL
+    prcp_data <- NULL
     
     # Not every station has temperature data. This loops through all stations in
     # a city and tries to find one with temperature data. If there are a lot of
     # stations, this can take a while
     for (station_id in station_info$station){
-      query_result <- purrr::quietly(get_data_for_station)(station_id)
-      has_temp_data <- length(query_result$warnings) == 0 
-      if(has_temp_data) break
-    }
-    if(is.null(query_result)){
-      stop("Sorry, no temperature data is available for your city, try a nearby one.")
+      
+      station_txt <- get_station_text(station_id)
+      # We only want to look for temperature or precipitation data if we havent already found it
+      # the get_*_data() functions will simply give back NULL if the data isn't present so checking
+      # if current value is null will tell us if we still need to look for the data
+      if(is.null(temp_data)){
+        temp_data <- get_temp_data(station_txt)
+      }
+     if(is.null(prcp_data)){
+        prcp_data <- get_prcp_data(station_txt)
+      }
     }
     
-    query_result$result
+    list(temperature = temp_data, percipitation = prcp_data)
   }) %>% 
     shiny::bindCache(input$city)
   
@@ -114,9 +120,7 @@ server <- function(input, output, session) {
   previous_city <- reactiveVal(NULL)
   
   observe({
-    validate(
-      need(input$city != '', 'Search for your city')
-    )
+    req(input$city)
     # Set the previous city to the non-updated current city. 
     # We need an isolate() here to avoid causing this call 
     # to trigger the reactive() update in a loop
@@ -127,26 +131,31 @@ server <- function(input, output, session) {
   
   output$prev_city_label <- renderText({ previous_city() })
   
-  observeEvent(input$prev_city, {
+  observe({
     updateSelectizeInput(
       session = session,
       inputId = "city",
       selected = isolate(previous_city())
     )
-  })
+  }) %>% bindEvent(input$prev_city)
   
-  observeEvent(input$rnd_city, {
+  observe({
     updateSelectizeInput(
       session = session,
       inputId = "city",
       selected = get_random_city()
     )
-  })
+  }) %>% bindEvent(input$rnd_city)
   
-  output$tempPlot <- renderCachedPlot({
-    city_data() %>%
-      get_temp_data() %>% 
-      ggplot(aes(x = date, y = avg)) +
+  output$tempPlot <- renderPlot({
+    validate(
+      need(
+        city_data()$temperature, 
+        glue::glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")
+      )
+    )
+
+    ggplot(city_data()$temperature, aes(x = date, y = avg)) +
       geom_ribbon(aes(ymin = min, ymax = max), 
                   fill = "steelblue", 
                   alpha = 0.5) +
@@ -157,9 +166,29 @@ server <- function(input, output, session) {
       scale_x_date(date_labels = "%B")+ 
       theme(text = element_text(size = 18),
             axis.title.y = ggtext::element_markdown(size = 18))   
-  },
-  # Don't waste time redrawing the same plot again
-  cacheKeyExpr = { list(input$city) })
+  }) %>% shiny::bindCache(input$city)
+ 
+  output$prcpPlot <- renderPlot({
+  
+    validate(
+      need(
+        city_data()$percipitation, # is NULL when no data available
+        glue::glue("Sorry, no percipitation data is available for {input$city}, try a nearby city.")
+      )
+    )
+    
+    ggplot(city_data()$percipitation, aes(x = date)) + 
+      geom_point(aes(y = day_amnt)) + 
+      geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
+      scale_x_date(date_labels = "%B")+ 
+      theme(text = element_text(size = 18),
+            axis.title.y = ggtext::element_markdown(size = 18)) +
+      labs(y = "inches of precipitation",
+           x = "",
+           title = glue::glue("{input$city} precipitation over year"),
+           subtitle = "Points show daily average, line is rolling weekly average")
+    }) %>% shiny::bindCache(input$city)
+  
 }
 
 
