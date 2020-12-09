@@ -14,30 +14,6 @@ library(stringr)
 library(readr)
 library(here)
 
-# These are the temp related fields we care about
-temperature_fields <- c("dly-tmax-normal", "dly-tavg-normal", "dly-tmin-normal")
-# These are the temp related fields we care about
-prcp_fields <- c("ytd-prcp-normal")
-
-station_to_city <- read_rds(here("data/station_to_city.rds"))
-unique_cities <- unique(station_to_city$city)
-
-get_random_city <- function(){
-  sample(unique_cities, 1)
-}
-
-# Takes an id for a station, grabs that stations text file from NOAA and returns it as a big string
-get_station_text <- function(station_id){
-  station_url <- paste0(
-    "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station/",
-    station_id,
-    ".normals.txt"
-  )
-  
-  readr::read_file(url(station_url))
-}
-
-
 
 # Look through raw text downloaded from NOAA servers for a given station and
 # extract the table for the desired data_id text as a dataframe
@@ -88,7 +64,7 @@ nullify_empty_results <- function(extracted_data){
 # Extract temperature info from the station text
 get_temp_data <- function(station_text){
   extracted <- purrr::map_dfr(
-     temperature_fields,
+    c("dly-tmax-normal", "dly-tavg-normal", "dly-tmin-normal"),
      extract_month_level_data, 
      file_lines = station_text
   ) %>% 
@@ -102,7 +78,7 @@ get_temp_data <- function(station_text){
     nullify_empty_results()
 }
 
-# Gotta make our own rolling mean function
+# Gotta make our own rolling mean function for the percipitation smoothing
 rolling_mean <- function(values, window_width){
   i <- seq_along(values)
   map2(i, pmax(i-window_width, 1), seq) %>% 
@@ -129,3 +105,4 @@ labeled_input <- function(id, label, input){
       span(label, style = "font-size: small;"),
       input)
 }
+
