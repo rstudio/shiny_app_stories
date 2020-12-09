@@ -105,8 +105,10 @@ server <- function(input, output, session) {
       station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
       
       # Constructs the correct url for station data and downloads it
-      station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
-        readr::read_file()
+      try({
+        station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
+          readr::read_file()
+      })
       
       # We only want to look for temperature or precipitation data if we havent already found it
       # the get_*_data() functions will simply give back NULL if the data isn't present so checking
