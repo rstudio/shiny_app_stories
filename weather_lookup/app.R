@@ -3,6 +3,7 @@ library(bslib)
 library(ggplot2)
 library(thematic)
 library(ggtext)
+library(glue)
 
 source('helpers.R')
 
@@ -15,9 +16,17 @@ my_theme <- bs_theme(
 # Let thematic know to use the font from bs_lib
 thematic_on(font = "auto")
 
+# Used to format annotations for extreme days
+date_fmt <- "%B %d"
 
+# We have an already build station to city df we are using for lookups
+station_to_city <- read_rds(here("data/station_to_city.rds"))
 
-# Define UI for application that draws a histogram
+# Some cities have multiple stations but we only want users to see unique cities
+unique_cities <- unique(station_to_city$city)
+# We start with a random city in the back button and have a random city jump button
+get_random_city <- function(){ sample(unique_cities, 1) }
+
 ui <- fluidPage(
     theme = my_theme,
     tags$head(
@@ -49,10 +58,10 @@ ui <- fluidPage(
         'city-selector', 
         "Search for a city",
         selectizeInput('city', 
-                        label = NULL,
-                        choices = unique_cities, 
-                        selected = "Ann Arbor, MI", 
-                        multiple = FALSE)
+                       label = NULL,
+                       choices = unique_cities, 
+                       selected = "Ann Arbor, MI", 
+                       multiple = FALSE)
       ),
       labeled_input(
         "prev_city_btn", 
@@ -75,18 +84,30 @@ server <- function(input, output, session) {
   city_data <- reactive({
     validate(need(input$city != '', 'Search for your city'))
     
-    # Find correct station id
-    station_info <- filter(station_to_city, city == input$city)
-
+    withProgress(message = 'Fetching data from NOAA', {
+    incProgress(0, detail = "Gathering city's station ids")
+    stations <- filter(station_to_city, city == input$city)$station
+    
+    # Figure out how many steps 
+    n_stations <- length(stations)
+    
     temp_data <- NULL
     prcp_data <- NULL
     
     # Not every station has temperature data. This loops through all stations in
     # a city and tries to find one with temperature data. If there are a lot of
     # stations, this can take a while
-    for (station_id in station_info$station){
+    for (i in 1:n_stations){
       
-      station_txt <- get_station_text(station_id)
+      incProgress(i/n_stations, detail = paste( "Checking station", i, "for data"))
+
+      # This is long but doesnt change
+      station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
+      
+      # Constructs the correct url for station data and downloads it
+      station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
+        readr::read_file()
+      
       # We only want to look for temperature or precipitation data if we havent already found it
       # the get_*_data() functions will simply give back NULL if the data isn't present so checking
       # if current value is null will tell us if we still need to look for the data
@@ -98,7 +119,10 @@ server <- function(input, output, session) {
       }
     }
     
+    incProgress(1, detail = "Packaging data for app")
     list(temperature = temp_data, percipitation = prcp_data)
+    })
+    
   }) %>% 
     shiny::bindCache(input$city)
   
@@ -140,21 +164,45 @@ server <- function(input, output, session) {
     validate(
       need(
         city_data()$temperature, 
-        glue::glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")
+        glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")
       )
     )
-
-    ggplot(city_data()$temperature, aes(x = date, y = avg)) +
-      geom_ribbon(aes(ymin = min, ymax = max), 
-                  fill = "steelblue", 
-                  alpha = 0.5) +
-      geom_line(color = "white") +
-      labs(y = "temperature (&#176; F)",
-           x = "",
-           title = glue::glue("{input$city} temperature over year")) +
-      scale_x_date(date_labels = "%B")+ 
-      theme(text = element_text(size = 18),
-            axis.title.y = ggtext::element_markdown(size = 18))   
+    
+    withProgress(message = 'Building temperature plot', {
+      incProgress(0/2, detail = "Finding hottest and coldest days")
+      
+      extremes <- bind_rows(
+        arrange(city_data()$temperature, -max, -avg, -min)[1,] %>% 
+          mutate(label = glue("Hotest day: {format(date, date_fmt)}<br>",
+                                    "Avg max temp = {format(max, digits = 3)}&#176;")), 
+        arrange(city_data()$temperature, min, avg, max)[1,] %>% 
+          mutate(label = glue("Coldest day: {format(date, date_fmt)}<br>",
+                                    "Avg min temp = {format(min, digits = 3)}&#176;"))
+      )
+    
+      incProgress(1/2, detail = "Rendering plot")
+      
+      ggplot(city_data()$temperature, aes(x = date, y = avg)) +
+        geom_ribbon(aes(ymin = min, ymax = max), 
+                    fill = "steelblue", 
+                    alpha = 0.5) +
+        geom_line(color = "white") +
+        geom_point(data = extremes) +
+        ggtext::geom_richtext(
+          data = extremes, 
+          aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+          nudge_y = -1,
+          label.color = NA, 
+          fill = after_scale(alpha("white", .5)), # Gives us a transparent background so text pops better
+          vjust = 1 ) +
+        labs(y = "temperature (&#176; F)",
+             x = "",
+             title = glue("{input$city} temperature over year")) +
+        scale_x_date(date_labels = "%B")+ 
+        theme(text = element_text(size = 18),
+              axis.title.y = ggtext::element_markdown(size = 18))   
+      
+    })
   }) %>% shiny::bindCache(input$city)
  
   output$prcpPlot <- renderPlot({
@@ -162,22 +210,41 @@ server <- function(input, output, session) {
     validate(
       need(
         city_data()$percipitation, # is NULL when no data available
-        glue::glue("Sorry, no percipitation data is available for {input$city}, try a nearby city.")
+        glue("Sorry, no percipitation data is available for {input$city}, try a nearby city.")
       )
     )
     
-    ggplot(city_data()$percipitation, aes(x = date)) + 
-      geom_point(aes(y = day_amnt)) + 
-      geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
-      scale_x_date(date_labels = "%B")+ 
-      theme(text = element_text(size = 18),
-            axis.title.y = ggtext::element_markdown(size = 18)) +
-      labs(y = "inches of precipitation",
-           x = "",
-           title = glue::glue("{input$city} precipitation over year"),
-           subtitle = "Points show daily average, line is rolling weekly average")
+    withProgress(message = 'Building precipitation plot', {
+      incProgress(0/2, detail = "Finding wettest day")
+      
+      wettest_day <- arrange(city_data()$percipitation, -day_amnt) %>% 
+        head(1) %>% 
+        mutate(label = glue(
+          "Wettest day: {format(date, date_fmt)}<br>",
+          "Avg percipitation = {format(day_amnt, digits = 3)}\""))
+      
+      incProgress(1/2, detail = "Rendering plot")
+      
+      ggplot(city_data()$percipitation, aes(x = date,y = day_amnt)) + 
+        geom_point() + 
+        geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
+        ggtext::geom_richtext(
+          data = wettest_day, 
+          aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+          nudge_x = 3,
+          label.color = NA,
+          fill = after_scale(alpha("white", .5)), # Gives us a transparent background so text pops better
+          vjust = 1 ) +
+        scale_x_date(date_labels = "%B")+ 
+        theme(text = element_text(size = 18),
+              axis.title.y = ggtext::element_markdown(size = 18)) +
+        labs(y = "inches of precipitation",
+             x = "",
+             title = glue("{input$city} precipitation over year"),
+             caption = "Points show daily average, line is rolling weekly average")
+      
+    })
     }) %>% shiny::bindCache(input$city)
-  
 }
 
 
