@@ -15,12 +15,7 @@ my_theme <- bs_theme(
 # Let thematic know to use the font from bs_lib
 thematic_on(font = "auto")
 
-labeled_input <- function(id, label, input){
-  div(id = id,
-      class = "labeled_input",
-      span(label),
-      input)
-}
+
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -28,13 +23,9 @@ ui <- fluidPage(
     tags$head(
       # Some css that makes everything above plot center aligned
       tags$style(HTML("
-      #header,           
-      .labeled_input {
+      #header {
         display: grid;
         justify-items: center;
-      }
-      
-      #header {
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(2, 1fr);
         align-items: flex-start;
@@ -45,14 +36,12 @@ ui <- fluidPage(
       #prev_city_btn { grid-area: 2 / 1 / 3 / 2; }
       #rnd_city_btn  { grid-area: 2 / 3 / 3 / 4; }
       
-      .labeled_input > span { font-size: small; }
       button { width: 200px; }
       button > div {
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
       }
-      
     "))),
     div(id = "header",
       titlePanel("Explore your weather"),

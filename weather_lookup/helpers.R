@@ -121,3 +121,11 @@ get_prcp_data <- function(station_text){
     ) %>% 
     nullify_empty_results()
 }
+
+# Add a nicely styled and centered label above a given input
+labeled_input <- function(id, label, input){
+  div(id = id,
+      style = "display: grid; justify-items: center;",
+      span(label, style = "font-size: small;"),
+      input)
+}
