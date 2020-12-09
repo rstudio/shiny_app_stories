@@ -71,7 +71,7 @@ ui <- fluidPage(
       labeled_input(
         "rnd_city_btn", 
         "Try a random city",
-        actionButton('rnd_city', HTML("&#127922"))
+        actionButton('rnd_city', icon('dice'))
       )
     ),
     plotOutput("tempPlot"),
