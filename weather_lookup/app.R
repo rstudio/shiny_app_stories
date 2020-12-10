@@ -105,6 +105,7 @@ server <- function(input, output, session) {
       station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
       
       # Constructs the correct url for station data and downloads it
+      # Wrapped in a try because sometimes station datasets dont exist when they should
       try({
         station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
           readr::read_file()
@@ -181,29 +182,39 @@ server <- function(input, output, session) {
           mutate(label = glue("Coldest day: {format(date, date_fmt)}<br>",
                                     "Avg min temp = {format(min, digits = 3)}&#176;"))
       )
-    
+      
+      context_points <- tibble(
+        label = c("107&#176;: hottest day in Pheonix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
+        temp = c(107, -14.9)
+      )
+      
       incProgress(1/2, detail = "Rendering plot")
       
       ggplot(city_data()$temperature, aes(x = date, y = avg)) +
+        geom_richtext(data = context_points, 
+                      aes(x = mdy("01-01-2000"), label = label, y = temp), 
+                      hjust = 0, vjust = c(0,1), nudge_y = c(1,-1), 
+                      label.color = NA, fill = NA,
+                      label.padding = grid::unit(rep(0, 4), "pt")) + 
+        geom_hline(data = context_points, aes(yintercept = temp)) +
         geom_ribbon(aes(ymin = min, ymax = max), 
                     fill = "steelblue", 
                     alpha = 0.5) +
         geom_line(color = "white") +
         geom_point(data = extremes) +
-        ggtext::geom_richtext(
-          data = extremes, 
-          aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-          nudge_y = -1,
-          label.color = NA, 
-          fill = after_scale(alpha("white", .5)), # Gives us a transparent background so text pops better
-          vjust = 1 ) +
+        ggtext::geom_richtext(data = extremes,
+                              aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                              nudge_y = -1,
+                              label.color = NA,
+                              # Gives us a transparent background so text pops better
+                              fill = after_scale(alpha("white", .5)), 
+                              vjust = 1 ) +
         labs(y = "temperature (&#176; F)",
              x = "",
              title = glue("{input$city} temperature over year")) +
         scale_x_date(date_labels = "%B")+ 
         theme(text = element_text(size = 18),
               axis.title.y = ggtext::element_markdown(size = 18))   
-      
     })
   }) %>% shiny::bindCache(input$city)
  
