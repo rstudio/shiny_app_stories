@@ -74,7 +74,7 @@ ui <- fluidPage(
         actionButton('rnd_city', icon('dice'))
       )
   ),
-  plotOutput("tempPlot"),
+  plotOutput("tempPlot", height = 600),
   plotOutput("prcpPlot"),
   div(icon("database"), "Data sourced from", 
       a(href = "https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/climate-normals", "NOAA Climate Normals"),
@@ -131,7 +131,7 @@ server <- function(input, output, session) {
     })
   }) %>% 
     # Our results will always be the same for a given city, so cache on that key
-    shiny::bindCache(input$city)
+    bindCache(input$city)
   
   # These hold book keeping stuff so we can have a back button
   # Start previous city button at a random city by setting the current city as
@@ -201,7 +201,7 @@ server <- function(input, output, session) {
         geom_hline(data = context_points, aes(yintercept = temp)) +
         geom_ribbon(aes(ymin = min, ymax = max), 
                     fill = "steelblue", 
-                    alpha = 0.5) +
+                    alpha = 0.25) +
         geom_line(color = "white") +
         geom_point(data = extremes) +
         ggtext::geom_richtext(data = extremes,
@@ -214,11 +214,17 @@ server <- function(input, output, session) {
         labs(y = "temperature (&#176; F)",
              x = "",
              title = glue("{input$city} temperature over year")) +
-        monthly_date_axis +
+        scale_x_date(date_labels = "%B", date_breaks = "1 month",
+                     minor_breaks = NULL, expand = expansion(mult = c(0, 0))) +
+        scale_y_continuous(breaks = seq(from = -10, to = 100, by = 10)) +
         theme(text = element_text(size = 18),
-              axis.title.y = ggtext::element_markdown(size = 18))   
+              axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1),
+              panel.grid.major = element_line(color = "grey70", size = 0.2),
+              panel.grid.minor = element_line(color = "grey85", size = 0.2),
+              axis.title.y = element_markdown(size = 18))
     })
-  }) %>% shiny::bindCache(input$city)
+  }) %>%
+    bindCache(input$city, sizePolicy = sizeGrowthRatio(width = 600, height = 600))
   
   output$prcpPlot <- renderPlot({
     
@@ -258,7 +264,8 @@ server <- function(input, output, session) {
              x = "",
              title = glue("{input$city} precipitation over year"))
     })
-  }) %>% shiny::bindCache(input$city)
+  }) %>%
+    bindCache(input$city)
 }
 
 # Run the application 
