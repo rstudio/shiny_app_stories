@@ -214,7 +214,7 @@ server <- function(input, output, session) {
         labs(y = "temperature (&#176; F)",
              x = "",
              title = glue("{input$city} temperature over year")) +
-        scale_x_date(date_labels = "%B")+ 
+        monthly_date_axis +
         theme(text = element_text(size = 18),
               axis.title.y = ggtext::element_markdown(size = 18))   
     })
@@ -228,32 +228,23 @@ server <- function(input, output, session) {
     )
     
     withProgress(message = 'Building precipitation plot', {
-      incProgress(0/2, detail = "Finding wettest day")
-      
-      wettest_day <- arrange(city_data()$precipitation, -day_amnt)[1,] %>% 
-        mutate(label = glue("Wettest day: {format(date, date_fmt)}<br>",
-                            "Avg precipitation = {format(day_amnt, digits = 3)}\""))
       
       incProgress(1/2, detail = "Rendering plot")
       
-      ggplot(city_data()$precipitation, aes(x = date,y = day_amnt)) + 
-        geom_point() + 
-        geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
-        ggtext::geom_richtext(data = wettest_day, 
-                              aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-                              nudge_x = 3,
-                              label.color = NA,
-                              # Gives us a transparent background so text pops better
-                              fill = after_scale(alpha("white", .5)), 
-                              vjust = 1 ) +
-        scale_x_date(date_labels = "%B")+ 
+      ggplot(city_data()$precipitation, aes(x = month, y = avg_precipitation)) +
+        geom_col(fill = "steelblue") + 
+        geom_text(aes(label = format(avg_precipitation, digits = 3)),
+                  nudge_y = 0.05,
+                  hjust = 0.5,
+                  color = "black",
+                  size = 5,
+                  vjust = 0 ) +
+        monthly_date_axis +
         theme(text = element_text(size = 18),
               axis.title.y = ggtext::element_markdown(size = 18)) +
         labs(y = "inches of precipitation",
              x = "",
-             title = glue("{input$city} precipitation over year"),
-             caption = "Points show daily average, line is rolling weekly average")
-      
+             title = glue("{input$city} precipitation over year"))
     })
   }) %>% shiny::bindCache(input$city)
 }

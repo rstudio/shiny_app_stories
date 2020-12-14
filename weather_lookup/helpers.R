@@ -58,22 +58,29 @@ get_temp_data <- function(station_text){
     nullify_empty_results()
 }
 
-# Gotta make our own rolling mean function for the precipitation smoothing
-rolling_mean <- function(values, window_width){
-  i <- seq_along(values)
-  map2(i, pmax(i-window_width, 1), seq) %>% 
-    map_dbl(~{mean(values[.x])})
-} 
+# We need this sequence a good bit and it's a bit of a mouthful so let's store
+# it here
+twelve_month_seq <- seq(ymd("2000-1-1"), ymd("2000-12-1"), by = "months")
 
 # Extract temperature info from the station text
 get_prcp_data <- function(station_text){
-  extract_month_level_data("ytd-prcp-normal", station_text) %>% 
-    mutate(type = str_remove_all(type, "ytd-|-normal"),
-           # provided values are in "hundredths of inches"
-           value = value/100,
-           day_amnt = value - lag(value, default = 0),
-           week_avg = rolling_mean(day_amnt, window_width = 7)) %>% 
-    nullify_empty_results()
+  low_quality_data <- str_detect(station_text, "Pseudonormals")
+  no_data <- !str_detect(station_text, "mly-prcp-normal")
+  if(low_quality_data | no_data){
+    return(NULL)
+  }
+  
+  months_prcp_avgs <- station_text %>% 
+    stringr::str_extract("(?<=mly-prcp-normal)((.|\\\n)*?)(?=\n)") %>% 
+    str_trim() %>% 
+    str_remove_all("[A-Z]") %>% 
+    str_split("\\s+") %>% 
+    pluck(1) %>% 
+    as.numeric()
+  
+  tibble(month = twelve_month_seq,
+         # Data reported as 100ths of an inch
+         avg_precipitation = months_prcp_avgs/100)
 }
 
 # Add a nicely styled and centered label above a given input
@@ -83,4 +90,7 @@ labeled_input <- function(id, label, input){
       span(label, style = "font-size: small;"),
       input)
 }
+
+monthly_date_axis <- scale_x_date(date_labels = "%b", breaks = twelve_month_seq)
+
 
