@@ -89,45 +89,34 @@ server <- function(input, output, session) {
     validate(need(input$city != '', 'Search for your city'))
     
     withProgress(message = 'Fetching data from NOAA', {
-      incProgress(0, detail = "Gathering city's station ids")
-      stations <- filter(station_to_city, city == input$city)$station
+      incProgress(0, detail = "Gathering all stations within city")
+      stations <- filter(station_to_city, city == input$city)
       
-      # Figure out how many steps 
-      n_stations <- length(stations)
-      
-      temp_data <- NULL
-      prcp_data <- NULL
+      # This is long but doesnt change
+      station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
       
       # Not every station has temperature data. This loops through all stations in
       # a city and tries to find one with temperature data. If there are a lot of
       # stations, this can take a while
-      for (i in 1:n_stations){
-        
-        incProgress(i/n_stations, detail = paste( "Checking station id", stations[i], "for data"))
-        
-        # This is long but doesnt change
-        station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
-        
-        # Constructs the correct url for station data and downloads it
-        # Wrapped in a try because sometimes station datasets dont exist when they should
-        try({
-          station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
-            readr::read_file()
-        })
-        
-        # We only want to look for temperature or precipitation data if we havent already found it
-        # the get_*_data() functions will simply give back NULL if the data isn't present so checking
-        # if current value is null will tell us if we still need to look for the data
-        if(is.null(temp_data)){
-          temp_data <- get_temp_data(station_txt)
-        }
-        if(is.null(prcp_data)){
-          prcp_data <- get_prcp_data(station_txt)
-        }
-      }
+      incProgress(1/4, detail = "Downloading data from all found stations")
+      station_files <- safe_map(stations$station, ~readr::read_file(glue("{station_url_prefix}/{.x}.normals.txt")))
+      
+      # If we have multiple stations with data we just collapse it to the mean
+      collapse_stations <- . %>% 
+        reduce(bind_rows, .init = tibble(date = Date())) %>% 
+        group_by(date) %>% 
+        summarise_all(mean)
+      
+      incProgress(2/4, detail = "Extracting temperature data")
+      temps <- safe_map(station_files, get_temp_data) %>% 
+        collapse_stations()
+      
+      incProgress(3/4, detail = "Extracting precipitation data")
+      precipitation_amnts <- safe_map(station_files, get_prcp_data) %>% 
+        collapse_stations()
       
       incProgress(1, detail = "Packaging data for app")
-      list(temperature = temp_data, precipitation = prcp_data)
+      list(temperature = temps, precipitation = precipitation_amnts)
     })
   }) %>% 
     # Our results will always be the same for a given city, so cache on that key
@@ -169,7 +158,7 @@ server <- function(input, output, session) {
   
   output$tempPlot <- renderPlot({
     validate(
-      need(city_data()$temperature, 
+      need(nrow(city_data()$temperature) != 0, 
            glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
     )
     
@@ -228,7 +217,7 @@ server <- function(input, output, session) {
   output$prcpPlot <- renderPlot({
     
     validate(
-      need(city_data()$precipitation, # is NULL when no data available
+      need(nrow(city_data()$precipitation) != 0, # is NULL when no data available
            glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
     )
     
@@ -237,23 +226,22 @@ server <- function(input, output, session) {
       avg_precipitation = c(11.48)
     )
     
-    
     withProgress(message = 'Building precipitation plot', {
       
       incProgress(1/2, detail = "Rendering plot")
       
       city_data()$precipitation %>%
-        ggplot(aes(x = month, y = avg_precipitation)) +
+        ggplot(aes(x = date, y = avg_precipitation)) +
         geom_richtext(data = context_point,
                       aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation),
                       hjust = 0, vjust = 0, nudge_y = 0.05, nudge_x = 2,
                       label.color = NA, fill = NA,
                       label.padding = grid::unit(rep(0, 4), "pt")) +
         geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
-        geom_rect(aes(xmin = month, xmax = month + months(1), ymin = 0, ymax = avg_precipitation),
+        geom_rect(aes(xmin = date, xmax = date + months(1), ymin = 0, ymax = avg_precipitation),
                   fill = "steelblue",
                   color = "white") +
-        geom_text(aes(label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3)), x = month + days(15)),
+        geom_text(aes(label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3)), x = date + days(15)),
                   nudge_y = 0.05,
                   hjust = 0.5,
                   color = "black",
