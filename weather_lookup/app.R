@@ -233,8 +233,8 @@ server <- function(input, output, session) {
     )
     
     context_point <- tibble(
-      label = c("7.25\": wettest month in Mobile, AL"),
-      avg_precipitation = c(7.25)
+      label = c("11.48\": wettest month in Miami, FL"),
+      avg_precipitation = c(11.48)
     )
     
     withProgress(message = 'Building precipitation plot', {
