@@ -85,9 +85,9 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  city_data <- reactive({    
-    validate(need(input$city != '', 'Search for your city'))
-    
+  city_data <- reactive({
+    req(input$city, cancelOutput = TRUE)
+
     withProgress(message = 'Fetching data from NOAA', {
       incProgress(0, detail = "Gathering city's station ids")
       stations <- filter(station_to_city, city == input$city)$station
@@ -223,7 +223,7 @@ server <- function(input, output, session) {
               axis.title.y = element_markdown(size = 18))
     })
   }) %>%
-    bindCache(input$city, sizePolicy = sizeGrowthRatio(width = 600, height = 600))
+    bindCache(input$city, sizePolicy = sizeGrowthRatio(width = 400, height = 600))
   
   output$prcpPlot <- renderPlot({
     
