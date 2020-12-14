@@ -227,18 +227,30 @@ server <- function(input, output, session) {
            glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
     )
     
+    context_point <- tibble(
+      label = c("7.25\": wettest month in Mobile, AL"),
+      avg_precipitation = c(7.25)
+    )
+    
     withProgress(message = 'Building precipitation plot', {
+      
       
       incProgress(1/2, detail = "Rendering plot")
       
       ggplot(city_data()$precipitation, aes(x = month, y = avg_precipitation)) +
+        geom_richtext(data = context_point, 
+                      aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation), 
+                      hjust = 0, vjust = 0, nudge_y = 0.05, 
+                      label.color = NA, fill = NA,
+                      label.padding = grid::unit(rep(0, 4), "pt")) + 
+        geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
         geom_col(fill = "steelblue") + 
         geom_text(aes(label = format(avg_precipitation, digits = 3)),
                   nudge_y = 0.05,
                   hjust = 0.5,
                   color = "black",
                   size = 5,
-                  vjust = 0 ) +
+                  vjust = 0) +
         monthly_date_axis +
         theme(text = element_text(size = 18),
               axis.title.y = ggtext::element_markdown(size = 18)) +
