@@ -178,7 +178,7 @@ server <- function(input, output, session) {
       
       extremes <- bind_rows(
         arrange(city_data()$temperature, -max, -avg, -min)[1,] %>% 
-          mutate(label = glue("Hotest day: {format(date, date_fmt)}<br>",
+          mutate(label = glue("Hottest day: {format(date, date_fmt)}<br>",
                               "Avg max temp = {format(max, digits = 3)}&#176;")), 
         arrange(city_data()$temperature, min, avg, max)[1,] %>% 
           mutate(label = glue("Coldest day: {format(date, date_fmt)}<br>",
