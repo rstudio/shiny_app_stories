@@ -91,6 +91,7 @@ labeled_input <- function(id, label, input){
       input)
 }
 
-monthly_date_axis <- scale_x_date(date_labels = "%b", breaks = twelve_month_seq)
+monthly_date_axis <- scale_x_date(date_labels = "%b", breaks = twelve_month_seq,
+                                  minor_breaks = NULL, expand = expansion(mult = c(0, 0)))
 
 

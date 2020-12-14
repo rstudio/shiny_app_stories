@@ -214,11 +214,10 @@ server <- function(input, output, session) {
         labs(y = "temperature (&#176; F)",
              x = "",
              title = glue("{input$city} temperature over year")) +
-        scale_x_date(date_labels = "%B", date_breaks = "1 month",
-                     minor_breaks = NULL, expand = expansion(mult = c(0, 0))) +
+        monthly_date_axis +
         scale_y_continuous(breaks = seq(from = -10, to = 100, by = 10)) +
         theme(text = element_text(size = 18),
-              axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1),
+              axis.text.x = element_text(hjust = 0),
               panel.grid.major = element_line(color = "grey70", size = 0.2),
               panel.grid.minor = element_line(color = "grey85", size = 0.2),
               axis.title.y = element_markdown(size = 18))
@@ -242,27 +241,34 @@ server <- function(input, output, session) {
       
       
       incProgress(1/2, detail = "Rendering plot")
-      
-      ggplot(city_data()$precipitation, aes(x = month, y = avg_precipitation)) +
+      city_data()$precipitation %>% 
+        ggplot(aes(x = month, y = avg_precipitation)) +
         geom_richtext(data = context_point, 
                       aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation), 
                       hjust = 0, vjust = 0, nudge_y = 0.05, 
                       label.color = NA, fill = NA,
                       label.padding = grid::unit(rep(0, 4), "pt")) + 
         geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
-        geom_col(fill = "steelblue") + 
-        geom_text(aes(label = format(avg_precipitation, digits = 3)),
+        geom_rect(aes(xmin = month, xmax = month + months(1), ymin = 0, ymax = avg_precipitation),
+                  fill = "steelblue",
+                  color = "white") +
+        geom_text(aes(label = format(avg_precipitation, digits = 3), x = month + days(15)),
                   nudge_y = 0.05,
                   hjust = 0.5,
                   color = "black",
                   size = 5,
                   vjust = 0) +
         monthly_date_axis +
-        theme(text = element_text(size = 18),
-              axis.title.y = ggtext::element_markdown(size = 18)) +
+        scale_y_continuous(breaks = seq(from = 0, to = 8, by = 1),
+                           expand = expansion(mult = c(0, 0.05))) +
         labs(y = "inches of precipitation",
              x = "",
-             title = glue("{input$city} precipitation over year"))
+             title = glue("{input$city} precipitation over year")) + 
+        theme(text = element_text(size = 18),
+              axis.text.x = element_text(hjust = 0),
+              panel.grid.major = element_line(color = "grey70", size = 0.2),
+              panel.grid.minor = element_line(color = "grey85", size = 0.2),
+              axis.title.y = element_markdown(size = 18))
     })
   }) %>%
     bindCache(input$city)
