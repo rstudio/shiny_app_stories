@@ -195,7 +195,7 @@ server <- function(input, output, session) {
       ggplot(city_data()$temperature, aes(x = date, y = avg)) +
         geom_richtext(data = context_points, 
                       aes(x = mdy("01-01-2000"), label = label, y = temp), 
-                      hjust = 0, vjust = c(0,1), nudge_y = c(1,-1), 
+                      hjust = 0, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
                       label.color = NA, fill = NA,
                       label.padding = grid::unit(rep(0, 4), "pt")) + 
         geom_hline(data = context_points, aes(yintercept = temp)) +
@@ -237,17 +237,18 @@ server <- function(input, output, session) {
       avg_precipitation = c(11.48)
     )
     
+    
     withProgress(message = 'Building precipitation plot', {
       
-      
       incProgress(1/2, detail = "Rendering plot")
-      city_data()$precipitation %>% 
+      
+      city_data()$precipitation %>%
         ggplot(aes(x = month, y = avg_precipitation)) +
-        geom_richtext(data = context_point, 
-                      aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation), 
-                      hjust = 0, vjust = 0, nudge_y = 0.05, 
+        geom_richtext(data = context_point,
+                      aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation),
+                      hjust = 0, vjust = 0, nudge_y = 0.05, nudge_x = 2,
                       label.color = NA, fill = NA,
-                      label.padding = grid::unit(rep(0, 4), "pt")) + 
+                      label.padding = grid::unit(rep(0, 4), "pt")) +
         geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
         geom_rect(aes(xmin = month, xmax = month + months(1), ymin = 0, ymax = avg_precipitation),
                   fill = "steelblue",
@@ -259,11 +260,11 @@ server <- function(input, output, session) {
                   size = 5,
                   vjust = 0) +
         monthly_date_axis +
-        scale_y_continuous(breaks = seq(from = 0, to = 8, by = 1),
+        scale_y_continuous(breaks = seq(from = 0, to = 10, by = 2),
                            expand = expansion(mult = c(0, 0.05))) +
         labs(y = "inches of precipitation",
              x = "",
-             title = glue("{input$city} precipitation over year")) + 
+             title = glue("{input$city} precipitation over year")) +
         theme(text = element_text(size = 18),
               axis.text.x = element_text(hjust = 0),
               panel.grid.major = element_line(color = "grey70", size = 0.2),
