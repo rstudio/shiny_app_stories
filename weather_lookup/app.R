@@ -85,7 +85,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  city_data <- reactive({
+  city_data <- reactive({    
     validate(need(input$city != '', 'Search for your city'))
     
     withProgress(message = 'Fetching data from NOAA', {
@@ -103,8 +103,8 @@ server <- function(input, output, session) {
       # stations, this can take a while
       for (i in 1:n_stations){
         
-        incProgress(i/n_stations, detail = paste( "Checking station", i, "for data"))
-  
+        incProgress(i/n_stations, detail = paste( "Checking station id", stations[i], "for data"))
+        
         # This is long but doesnt change
         station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
         
@@ -127,7 +127,7 @@ server <- function(input, output, session) {
       }
       
       incProgress(1, detail = "Packaging data for app")
-      list(temperature = temp_data, percipitation = prcp_data)
+      list(temperature = temp_data, precipitation = prcp_data)
     })
   }) %>% 
     # Our results will always be the same for a given city, so cache on that key
@@ -223,20 +223,20 @@ server <- function(input, output, session) {
   output$prcpPlot <- renderPlot({
   
     validate(
-      need(city_data()$percipitation, # is NULL when no data available
-           glue("Sorry, no percipitation data is available for {input$city}, try a nearby city."))
+      need(city_data()$precipitation, # is NULL when no data available
+           glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
     )
     
     withProgress(message = 'Building precipitation plot', {
       incProgress(0/2, detail = "Finding wettest day")
       
-      wettest_day <- arrange(city_data()$percipitation, -day_amnt)[1,] %>% 
+      wettest_day <- arrange(city_data()$precipitation, -day_amnt)[1,] %>% 
         mutate(label = glue("Wettest day: {format(date, date_fmt)}<br>",
-                            "Avg percipitation = {format(day_amnt, digits = 3)}\""))
+                            "Avg precipitation = {format(day_amnt, digits = 3)}\""))
       
       incProgress(1/2, detail = "Rendering plot")
       
-      ggplot(city_data()$percipitation, aes(x = date,y = day_amnt)) + 
+      ggplot(city_data()$precipitation, aes(x = date,y = day_amnt)) + 
         geom_point() + 
         geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
         ggtext::geom_richtext(data = wettest_day, 
