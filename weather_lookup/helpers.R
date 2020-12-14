@@ -77,10 +77,10 @@ get_prcp_data <- function(station_text){
     str_split("\\s+") %>% 
     pluck(1) %>% 
     as.numeric()
-  
   tibble(month = twelve_month_seq,
          # Data reported as 100ths of an inch
-         avg_precipitation = months_prcp_avgs/100)
+         # -7777 is used to denote a value that rounds to 0 but is not technically zero
+         avg_precipitation = ifelse(months_prcp_avgs == -7777, 0, months_prcp_avgs/100))
 }
 
 # Add a nicely styled and centered label above a given input

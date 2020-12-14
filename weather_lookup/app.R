@@ -252,7 +252,7 @@ server <- function(input, output, session) {
         geom_rect(aes(xmin = month, xmax = month + months(1), ymin = 0, ymax = avg_precipitation),
                   fill = "steelblue",
                   color = "white") +
-        geom_text(aes(label = format(avg_precipitation, digits = 3), x = month + days(15)),
+        geom_text(aes(label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3)), x = month + days(15)),
                   nudge_y = 0.05,
                   hjust = 0.5,
                   color = "black",
