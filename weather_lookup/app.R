@@ -30,28 +30,28 @@ get_random_city <- function(){ sample(unique_cities, 1) }
 ui <- fluidPage(
     theme = my_theme,
     tags$head(
-      # Some css that makes everything above plot center aligned
+      # Some css that makes everything above plot center aligned and keeps buttons sized reasonably
       tags$style(HTML("
-      #header {
-        display: grid;
-        justify-items: center;
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-        align-items: flex-start;
-      }
-
-      #header > h2   { grid-area: 1 / 1 / 2 / 4; }
-      #city-selector { grid-area: 2 / 2 / 3 / 3; }
-      #prev_city_btn { grid-area: 2 / 1 / 3 / 2; }
-      #rnd_city_btn  { grid-area: 2 / 3 / 3 / 4; }
-      
-      button { width: 200px; }
-      button > div {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-      }
-    "))),
+        #header {
+          display: grid;
+          justify-items: center;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(2, 1fr);
+          align-items: flex-start;
+        }
+  
+        #header > h2   { grid-area: 1 / 1 / 2 / 4; }
+        #city-selector { grid-area: 2 / 2 / 3 / 3; }
+        #prev_city_btn { grid-area: 2 / 1 / 3 / 2; }
+        #rnd_city_btn  { grid-area: 2 / 3 / 3 / 4; }
+        
+        button { width: 200px; }
+        button > div {
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+      "))),
     div(id = "header",
       titlePanel("Explore your weather"),
       labeled_input(
@@ -89,48 +89,48 @@ server <- function(input, output, session) {
     validate(need(input$city != '', 'Search for your city'))
     
     withProgress(message = 'Fetching data from NOAA', {
-    incProgress(0, detail = "Gathering city's station ids")
-    stations <- filter(station_to_city, city == input$city)$station
-    
-    # Figure out how many steps 
-    n_stations <- length(stations)
-    
-    temp_data <- NULL
-    prcp_data <- NULL
-    
-    # Not every station has temperature data. This loops through all stations in
-    # a city and tries to find one with temperature data. If there are a lot of
-    # stations, this can take a while
-    for (i in 1:n_stations){
+      incProgress(0, detail = "Gathering city's station ids")
+      stations <- filter(station_to_city, city == input$city)$station
       
-      incProgress(i/n_stations, detail = paste( "Checking station", i, "for data"))
-
-      # This is long but doesnt change
-      station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
+      # Figure out how many steps 
+      n_stations <- length(stations)
       
-      # Constructs the correct url for station data and downloads it
-      # Wrapped in a try because sometimes station datasets dont exist when they should
-      try({
-        station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
-          readr::read_file()
-      })
+      temp_data <- NULL
+      prcp_data <- NULL
       
-      # We only want to look for temperature or precipitation data if we havent already found it
-      # the get_*_data() functions will simply give back NULL if the data isn't present so checking
-      # if current value is null will tell us if we still need to look for the data
-      if(is.null(temp_data)){
-        temp_data <- get_temp_data(station_txt)
+      # Not every station has temperature data. This loops through all stations in
+      # a city and tries to find one with temperature data. If there are a lot of
+      # stations, this can take a while
+      for (i in 1:n_stations){
+        
+        incProgress(i/n_stations, detail = paste( "Checking station", i, "for data"))
+  
+        # This is long but doesnt change
+        station_url_prefix <- "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station"
+        
+        # Constructs the correct url for station data and downloads it
+        # Wrapped in a try because sometimes station datasets dont exist when they should
+        try({
+          station_txt <- glue("{station_url_prefix}/{stations[i]}.normals.txt") %>%
+            readr::read_file()
+        })
+        
+        # We only want to look for temperature or precipitation data if we havent already found it
+        # the get_*_data() functions will simply give back NULL if the data isn't present so checking
+        # if current value is null will tell us if we still need to look for the data
+        if(is.null(temp_data)){
+          temp_data <- get_temp_data(station_txt)
+        }
+       if(is.null(prcp_data)){
+          prcp_data <- get_prcp_data(station_txt)
+        }
       }
-     if(is.null(prcp_data)){
-        prcp_data <- get_prcp_data(station_txt)
-      }
-    }
-    
-    incProgress(1, detail = "Packaging data for app")
-    list(temperature = temp_data, percipitation = prcp_data)
+      
+      incProgress(1, detail = "Packaging data for app")
+      list(temperature = temp_data, percipitation = prcp_data)
     })
-    
   }) %>% 
+    # Our results will always be the same for a given city, so cache on that key
     shiny::bindCache(input$city)
   
   # These hold book keeping stuff so we can have a back button
@@ -169,10 +169,8 @@ server <- function(input, output, session) {
   
   output$tempPlot <- renderPlot({
     validate(
-      need(
-        city_data()$temperature, 
-        glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")
-      )
+      need(city_data()$temperature, 
+           glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
     )
     
     withProgress(message = 'Building temperature plot', {
@@ -181,10 +179,10 @@ server <- function(input, output, session) {
       extremes <- bind_rows(
         arrange(city_data()$temperature, -max, -avg, -min)[1,] %>% 
           mutate(label = glue("Hotest day: {format(date, date_fmt)}<br>",
-                                    "Avg max temp = {format(max, digits = 3)}&#176;")), 
+                              "Avg max temp = {format(max, digits = 3)}&#176;")), 
         arrange(city_data()$temperature, min, avg, max)[1,] %>% 
           mutate(label = glue("Coldest day: {format(date, date_fmt)}<br>",
-                                    "Avg min temp = {format(min, digits = 3)}&#176;"))
+                              "Avg min temp = {format(min, digits = 3)}&#176;"))
       )
       
       context_points <- tibble(
@@ -225,33 +223,29 @@ server <- function(input, output, session) {
   output$prcpPlot <- renderPlot({
   
     validate(
-      need(
-        city_data()$percipitation, # is NULL when no data available
-        glue("Sorry, no percipitation data is available for {input$city}, try a nearby city.")
-      )
+      need(city_data()$percipitation, # is NULL when no data available
+           glue("Sorry, no percipitation data is available for {input$city}, try a nearby city."))
     )
     
     withProgress(message = 'Building precipitation plot', {
       incProgress(0/2, detail = "Finding wettest day")
       
-      wettest_day <- arrange(city_data()$percipitation, -day_amnt) %>% 
-        head(1) %>% 
-        mutate(label = glue(
-          "Wettest day: {format(date, date_fmt)}<br>",
-          "Avg percipitation = {format(day_amnt, digits = 3)}\""))
+      wettest_day <- arrange(city_data()$percipitation, -day_amnt)[1,] %>% 
+        mutate(label = glue("Wettest day: {format(date, date_fmt)}<br>",
+                            "Avg percipitation = {format(day_amnt, digits = 3)}\""))
       
       incProgress(1/2, detail = "Rendering plot")
       
       ggplot(city_data()$percipitation, aes(x = date,y = day_amnt)) + 
         geom_point() + 
         geom_line(aes(y = week_avg), color = "steelblue", size = 3) +
-        ggtext::geom_richtext(
-          data = wettest_day, 
-          aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-          nudge_x = 3,
-          label.color = NA,
-          fill = after_scale(alpha("white", .5)), # Gives us a transparent background so text pops better
-          vjust = 1 ) +
+        ggtext::geom_richtext(data = wettest_day, 
+                              aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                              nudge_x = 3,
+                              label.color = NA,
+                              # Gives us a transparent background so text pops better
+                              fill = after_scale(alpha("white", .5)), 
+                              vjust = 1 ) +
         scale_x_date(date_labels = "%B")+ 
         theme(text = element_text(size = 18),
               axis.title.y = ggtext::element_markdown(size = 18)) +
@@ -263,7 +257,6 @@ server <- function(input, output, session) {
     })
     }) %>% shiny::bindCache(input$city)
 }
-
 
 # Run the application 
 shinyApp(ui = ui, server = server) 

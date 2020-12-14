@@ -1,11 +1,4 @@
-# This is the code I ran before being able to run examples
-
-# # This installs the newest version of shiny (I had old one)
-# remotes::install_github("rstudio/shiny")
-# 
-# # This was required to run the demo app
-# remotes::install_github("rstudio/thematic")
-# 
+# Helper functions for weather gathering app
 library(dplyr)
 library(tidyr)
 library(purrr)
@@ -22,32 +15,24 @@ extract_month_level_data <- function(data_id, file_lines){
   # If we're missing the data field dont bother trying to find it
   id_missing <- !str_detect(string = file_lines, pattern = data_id)
   if(id_missing){
-    return(tibble(
-      month = character(), 
-      day = character(), 
-      value = numeric(), 
-      type = character()
-      ))
+    return(tibble(month = character(), 
+                  day = character(), 
+                  value = numeric(), 
+                  type = character()))
   }
-  stringr::str_extract(
-    file_lines,
-    paste0("(?<=", data_id, ")((.|\\\n)*?)(?=\n \n)")
-  ) %>% 
+  file_lines %>% 
+    # A semi hairy regex to extract block of relevant data
+    stringr::str_extract(paste0("(?<=", data_id, ")((.|\\\n)*?)(?=\n \n)")) %>% 
     str_remove_all("\\s+(?=\n)") %>% 
     str_remove_all("(?<=\n)\\s+") %>% 
     paste0("\n") %>% 
     readr::read_table2(col_names = c("month", 1:31)) %>% 
-    pivot_longer(
-      c(-month),
-      names_to = "day"
-    ) %>% 
+    pivot_longer(-month, names_to = "day") %>% 
     filter(!(value %in% c(-8888, -9999))) %>% 
-    transmute(
-      type = data_id,
-      value = as.numeric(str_remove(value, "[A-Z]")),
-      # After filter so we dont try and parse nonsense dates like feb 31st
-      date = lubridate::mdy(paste0(month, "-", day, "-2000"))
-    )
+    transmute(type = data_id,
+              value = as.numeric(str_remove(value, "[A-Z]")),
+              # After filter so we dont try and parse dates like feb 31st
+              date = lubridate::mdy(paste0(month, "-", day, "-2000")))
 }
 
 # We use results of "NULL" as the indicator no data was found. This turns an
@@ -63,22 +48,17 @@ nullify_empty_results <- function(extracted_data){
 
 # Extract temperature info from the station text
 get_temp_data <- function(station_text){
-  extracted <- purrr::map_dfr(
-    c("dly-tmax-normal", "dly-tavg-normal", "dly-tmin-normal"),
-     extract_month_level_data, 
-     file_lines = station_text
-  ) %>% 
-    mutate(
-      type = str_remove_all(type, "dly-t|-normal"),
-      # Results are given in tenths of a farenheit degree so we need to divide by 10 to get actual degree
-      # See here https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/supplemental/readme-supp.txt
-      value = value/10
-    ) %>% 
+  c("dly-tmax-normal", "dly-tavg-normal", "dly-tmin-normal") %>% 
+    purrr::map_dfr(extract_month_level_data, file_lines = station_text) %>% 
+    mutate(type = str_remove_all(type, "dly-t|-normal"),
+           # Results are given in tenths of a degree so we need to divide by 10
+           # See https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/readme.txt
+           value = value/10) %>% 
     pivot_wider(names_from = c(type), values_from = c(value)) %>% 
     nullify_empty_results()
 }
 
-# Gotta make our own rolling mean function for the percipitation smoothing
+# Gotta make our own rolling mean function for the precipitation smoothing
 rolling_mean <- function(values, window_width){
   i <- seq_along(values)
   map2(i, pmax(i-window_width, 1), seq) %>% 
@@ -88,13 +68,11 @@ rolling_mean <- function(values, window_width){
 # Extract temperature info from the station text
 get_prcp_data <- function(station_text){
   extract_month_level_data("ytd-prcp-normal", station_text) %>% 
-    mutate(
-      type = str_remove_all(type, "ytd-|-normal"),
-      # provided values are in "hundredths of inches": https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/readme.txt
-      value = value/100,
-      day_amnt = value - lag(value, default = 0),
-      week_avg = rolling_mean(day_amnt, window_width = 7)
-    ) %>% 
+    mutate(type = str_remove_all(type, "ytd-|-normal"),
+           # provided values are in "hundredths of inches"
+           value = value/100,
+           day_amnt = value - lag(value, default = 0),
+           week_avg = rolling_mean(day_amnt, window_width = 7)) %>% 
     nullify_empty_results()
 }
 
