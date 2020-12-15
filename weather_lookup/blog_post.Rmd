@@ -1,0 +1,24 @@
+---
+title: "Fast and kind API queries with `shiny::bindCache()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Summary
+
+Here we demonstrate the use of the new `bindCache()` function in Shiny to greatly speedup a Shiny app that queries an NOAA weather station data API. The use of caching not only speeds up the app for end users but relieves pressure from the API. In this post we will demonstrate the adding of `bindCache` to existing reactive expressions, explaining where and why it should be used along with some potential gotchas of doing so. 
+
+## NOAA Temperature Normals
+- Weather station data on temp and precipitataion
+- 1981-2010
+- Gives "normal" or "average" weather
+
+## Inspiration for app
+- NYT how much hotter was your city story
+- Holistic view of weather
+
+## `bindCache()` vs `renderCachedPlot()`
