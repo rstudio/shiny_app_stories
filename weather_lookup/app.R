@@ -100,7 +100,7 @@ server <- function(input, output, session) {
       # a city and tries to find one with temperature data. If there are a lot of
       # stations, this can take a while
       incProgress(1/4, detail = "Downloading data from all found stations")
-      station_files <- safe_map(stations$station, ~readr::read_file(glue("{station_url_prefix}/{.x}.normals.txt")))
+      stations$data <- safe_map(stations$station, ~readr::read_file(glue("{station_url_prefix}/{.x}.normals.txt")))
 
       # If we have multiple stations with data we just collapse it to the mean
       collapse_stations <- . %>%
@@ -109,15 +109,15 @@ server <- function(input, output, session) {
         summarise_all(mean)
 
       incProgress(2/4, detail = "Extracting temperature data")
-      temps <- safe_map(station_files, get_temp_data) %>%
-        collapse_stations()
+      stations$temp_res <- safe_map(stations$data, get_temp_data)
+      temperature <- collapse_stations(stations$temp_res)
 
       incProgress(3/4, detail = "Extracting precipitation data")
-      precipitation_amnts <- safe_map(station_files, get_prcp_data) %>%
-        collapse_stations()
+      stations$prcp_res <- safe_map(stations$data, get_prcp_data)
+      precipitation <- collapse_stations(stations$prcp_res)
 
       incProgress(1, detail = "Packaging data for app")
-      list(temperature = temps, precipitation = precipitation_amnts)
+      list(temperature = temperature, precipitation = precipitation)
     })
   }) %>%
     # Our results will always be the same for a given city, so cache on that key
