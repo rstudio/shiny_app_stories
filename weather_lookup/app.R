@@ -51,25 +51,19 @@ ui <- fluidPage(
       "))),
   div(id = "header",
       titlePanel("Explore your weather"),
-      labeled_input(
-        'city-selector',
-        "Search for a city",
-        selectizeInput('city',
-                       label = NULL,
-                       choices = unique_cities,
-                       selected = "Ann Arbor, MI",
-                       multiple = FALSE)
-      ),
-      labeled_input(
-        "prev_city_btn",
-        "Return to previous city",
-        actionButton('prev_city', textOutput('prev_city_label'))
-      ),
-      labeled_input(
-        "rnd_city_btn",
-        "Try a random city",
-        actionButton('rnd_city', icon('dice'))
-      )
+      labeled_input('city-selector',
+                    "Search for a city",
+                    selectizeInput('city',
+                                   label = NULL,
+                                   choices = unique_cities,
+                                   selected = "Ann Arbor, MI",
+                                   multiple = FALSE)),
+      labeled_input("prev_city_btn",
+                    "Return to previous city",
+                    actionButton('prev_city', textOutput('prev_city_label'))),
+      labeled_input("rnd_city_btn",
+                    "Try a random city",
+                    actionButton('rnd_city', icon('dice')))
   ),
   plotOutput("tempPlot", height = 600),
   plotOutput("prcpPlot"),
