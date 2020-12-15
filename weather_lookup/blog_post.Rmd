@@ -16,7 +16,7 @@ Here we demonstrate the use of the new `bindCache()` function in Shiny to greatl
 ## Demo App
 
 ### NOAA Temperature Normals
-- Weather station data on temp and precipitataion
+- Weather station data on temp and precipitation
 - 1981-2010
 - Gives "normal" or "average" weather
 
