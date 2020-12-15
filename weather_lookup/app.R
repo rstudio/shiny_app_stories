@@ -117,7 +117,13 @@ server <- function(input, output, session) {
       precipitation <- collapse_stations(stations$prcp_res)
 
       incProgress(1, detail = "Packaging data for app")
-      list(temperature = temperature, precipitation = precipitation)
+
+      list(temperature = temperature,
+           precipitation = precipitation,
+           station_info = stations %>%
+             mutate(had_temp = !map_lgl(temp_res, is.null),
+                    had_prcp = !map_lgl(prcp_res, is.null)) %>%
+             select(station, name, zip, had_temp, had_prcp))
     })
   }) %>%
     # Our results will always be the same for a given city, so cache on that key
