@@ -3,3 +3,5 @@
 .Rhistory
 README.html
 .Rproj.user
+
+weather_lookup/tests/mytest-current/
