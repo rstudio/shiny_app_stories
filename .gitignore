@@ -1,6 +1,5 @@
-
 .DS_Store
-
 */.Rproj.user/
-
+.Rhistory
 README.html
+.Rproj.user

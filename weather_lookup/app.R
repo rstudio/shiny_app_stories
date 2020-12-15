@@ -16,9 +16,6 @@ my_theme <- bs_theme(
 # Let thematic know to use the font from bs_lib
 thematic_on(font = "auto")
 
-# Used to format annotations for extreme days
-date_fmt <- "%B %d"
-
 # We have an already build station to city df we are using for lookups
 station_to_city <- read_rds(here("data/station_to_city.rds"))
 
@@ -167,10 +164,10 @@ server <- function(input, output, session) {
 
       extremes <- bind_rows(
         arrange(city_data()$temperature, -max, -avg, -min)[1,] %>%
-          mutate(label = glue("Hottest day: {format(date, date_fmt)}<br>",
+          mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
                               "Avg max temp = {format(max, digits = 3)}&#176;")),
         arrange(city_data()$temperature, min, avg, max)[1,] %>%
-          mutate(label = glue("Coldest day: {format(date, date_fmt)}<br>",
+          mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
                               "Avg min temp = {format(min, digits = 3)}&#176;"))
       )
 
