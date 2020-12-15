@@ -5,6 +5,15 @@ library(thematic)
 library(ggtext)
 library(glue)
 
+
+if (getOption("cache", FALSE)) {
+  bindCache <- shiny::bindCache
+  print("Enabling caching")
+} else {
+  bindCache <- function(x, ...) x
+  print("Disabling caching")
+}
+
 source('helpers.R')
 
 # Builds theme object to be supplied to ui
