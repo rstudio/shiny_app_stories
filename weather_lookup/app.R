@@ -5,8 +5,8 @@ library(thematic)
 library(ggtext)
 library(glue)
 
-
-if (getOption("cache", FALSE)) {
+# Default is use caching
+if (getOption("cache", TRUE)) {
   bindCache <- shiny::bindCache
   print("Enabling caching")
 } else {
