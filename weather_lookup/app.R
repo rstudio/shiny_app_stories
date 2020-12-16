@@ -64,8 +64,7 @@ ui <- fluidPage(
                     "Search for a city",
                     selectizeInput('city',
                                    label = NULL,
-                                   choices = unique_cities,
-                                   selected = "Ann Arbor, MI",
+                                   choices = c("", unique_cities),
                                    multiple = FALSE)),
       labeled_input("prev_city_btn",
                     "Return to previous city",
@@ -89,6 +88,50 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  # If the URL contains a city on load, use that city instead of the default of ann arbor
+  bookmarked_city <- isolate(getUrlHash()) %>% str_replace_all("-", " ") %>% str_remove("#")
+  current_city <- reactiveVal( if(bookmarked_city %in% unique_cities) bookmarked_city else "Ann Arbor, MI")
+  updateSelectizeInput(
+    session = session,
+    inputId = "city",
+    selected = isolate(current_city())
+  )
+
+  # A book-keeping reactive so we can have a previous city button
+  previous_city <- reactiveVal(NULL)
+
+  observe({
+    req(input$city)
+    # Set the previous city to the non-updated current city. If app is just
+    # starting we want to populate the previous city button with a random city,
+    # not the current city
+    selected_city <- isolate(current_city())
+    just_starting <- selected_city == input$city
+    previous_city(if(just_starting) get_random_city() else selected_city)
+
+    # Current city now can be updated to the newly selected city
+    current_city(input$city)
+
+    # Update the query string so the app will know what to do.
+    updateQueryString(paste0("#",str_replace_all(current_city(), "\\s", "-")), mode = "push")
+  })
+
+  observe({
+    updateSelectizeInput(
+      session = session,
+      inputId = "city",
+      selected = isolate(previous_city())
+    )
+  }) %>% bindEvent(input$prev_city)
+
+  observe({
+    updateSelectizeInput(
+      session = session,
+      inputId = "city",
+      selected = get_random_city()
+    )
+  }) %>% bindEvent(input$rnd_city)
+
 
   city_data <- reactive({
     req(input$city, cancelOutput = TRUE)
@@ -131,22 +174,6 @@ server <- function(input, output, session) {
     # Our results will always be the same for a given city, so cache on that key
     bindCache(input$city)
 
-  # These hold book keeping stuff so we can have a back button
-  # Start previous city button at a random city by setting the current city as
-  # random The observe below then moves that into the previous city value
-  current_city <- reactiveVal(get_random_city())
-  previous_city <- reactiveVal(NULL)
-
-  observe({
-    req(input$city)
-    # Set the previous city to the non-updated current city.
-    # We need an isolate() here to avoid causing this call
-    # to trigger the reactive() update in a loop
-    previous_city(isolate(current_city()))
-    # Current city now can be updated to the newly selected city
-    current_city(input$city)
-  })
-
 
   output$station_info <- renderUI({
     city_data()$station_info %>%
@@ -160,22 +187,6 @@ server <- function(input, output, session) {
   })
 
   output$prev_city_label <- renderText({ previous_city() })
-
-  observe({
-    updateSelectizeInput(
-      session = session,
-      inputId = "city",
-      selected = isolate(previous_city())
-    )
-  }) %>% bindEvent(input$prev_city)
-
-  observe({
-    updateSelectizeInput(
-      session = session,
-      inputId = "city",
-      selected = get_random_city()
-    )
-  }) %>% bindEvent(input$rnd_city)
 
   output$tempPlot <- renderPlot({
     validate(
