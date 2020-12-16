@@ -29,6 +29,7 @@ station_to_city <- read_rds(here("data/station_to_city.rds"))
 
 # Some cities have multiple stations but we only want users to see unique cities
 unique_cities <- unique(station_to_city$city)
+
 # We start with a random city in the back button and have a random city jump button
 get_random_city <- function(){ sample(unique_cities, 1) }
 
