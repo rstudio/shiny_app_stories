@@ -90,3 +90,11 @@ monthly_date_axis <- scale_x_date(date_labels = "%b", breaks = twelve_month_seq,
 safe_map <- function(x, fn){
   map(x, possibly(fn, otherwise = NULL))
 }
+
+build_station_url <- function(station_id){
+  paste0(
+    "https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/auxiliary/station/",
+    station_id,
+    ".normals.txt"
+  )
+}
