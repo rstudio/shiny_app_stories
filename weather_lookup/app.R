@@ -151,7 +151,7 @@ server <- function(input, output, session) {
   output$station_info <- renderUI({
     city_data()$station_info %>%
       glue_data("<div style = 'border:1px solid black; border-radius: 9px; padding: 5px; margin: 5px'> ",
-                "<a href = {url}>",
+                "<a href = {url} target='_blank'>",
                 "{station} {ifelse(had_temp, as.character(icon('thermometer-half')), '')} {ifelse(had_prcp, as.character(icon('cloud-rain')), '')}",
                 "</a>",
                 "</div>") %>%
