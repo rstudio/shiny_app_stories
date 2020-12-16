@@ -91,11 +91,7 @@ server <- function(input, output, session) {
   # If the URL contains a city on load, use that city instead of the default of ann arbor
   bookmarked_city <- isolate(getUrlHash()) %>% str_replace_all("-", " ") %>% str_remove("#")
   current_city <- reactiveVal( if(bookmarked_city %in% unique_cities) bookmarked_city else "Ann Arbor, MI")
-  updateSelectizeInput(
-    session = session,
-    inputId = "city",
-    selected = isolate(current_city())
-  )
+  updateSelectizeInput(inputId = "city", selected = isolate(current_city()))
 
   # A book-keeping reactive so we can have a previous city button
   previous_city <- reactiveVal(NULL)
@@ -117,21 +113,12 @@ server <- function(input, output, session) {
   })
 
   observe({
-    updateSelectizeInput(
-      session = session,
-      inputId = "city",
-      selected = isolate(previous_city())
-    )
+    updateSelectizeInput(inputId = "city", selected = isolate(previous_city()))
   }) %>% bindEvent(input$prev_city)
 
   observe({
-    updateSelectizeInput(
-      session = session,
-      inputId = "city",
-      selected = get_random_city()
-    )
+    updateSelectizeInput(inputId = "city", selected = get_random_city())
   }) %>% bindEvent(input$rnd_city)
-
 
   city_data <- reactive({
     req(input$city, cancelOutput = TRUE)
@@ -173,7 +160,6 @@ server <- function(input, output, session) {
   }) %>%
     # Our results will always be the same for a given city, so cache on that key
     bindCache(input$city)
-
 
   output$station_info <- renderUI({
     city_data()$station_info %>%
