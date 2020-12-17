@@ -8,21 +8,21 @@ run_use_test <- function(use_caching){
   app <- ShinyDriver$new("./", phantomTimeout = 10000, loadTimeout = 10000,
                          options = list(cache = use_caching),
                          seed = 42)
-  # Using a seed because the app randomly chooses city with rnd_city button
+  # Using a seed because the app randomly chooses city in rnd_city button and
+  # initial back button
+
   app$snapshotInit("mytest")
-
-  app$snapshot()
-  app$setInputs(city = "Redwood City, CA", timeout_ = 10000)
-  app$setInputs(prev_city = "click"      , timeout_ = 10000)
-  app$setInputs(rnd_city = "click"       , timeout_ = 10000)
-  app$setInputs(prev_city = "click"      , timeout_ = 10000)
-  app$setInputs(rnd_city = "click"       , timeout_ = 10000)
-  app$setInputs(prev_city = "click"      , timeout_ = 10000)
-  app$setInputs(prev_city = "click"      , timeout_ = 10000)
-  app$setInputs(prev_city = "click"      , timeout_ = 10000)
-  app$snapshot()
+  app$setInputs(city = "", timeout_ = 10000)
+  app$setInputs(city = "Minneapolis, MN", timeout_ = 10000)
+  app$setInputs(city = "", timeout_ = 10000)
+  app$setInputs(city = "Houston, TX", timeout_ = 10000)
+  app$setInputs(prev_city = "click", timeout_ = 10000)
+  app$setInputs(prev_city = "click", timeout_ = 10000)
+  app$setInputs(prev_city = "click", timeout_ = 10000)
+  app$setInputs(city = "New York, NY", timeout_ = 10000)
+  app$setInputs(prev_city = "click", timeout_ = 10000)
+  app$setInputs(prev_city = "click", timeout_ = 10000)
 }
-
 
 speed_comparison <- bench::mark(
   run_use_test(use_caching = TRUE),
