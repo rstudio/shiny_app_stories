@@ -59,7 +59,6 @@ ui <- fluidPage(
       "For cities with multiple weather stations the average across all reporting stations is used.")
 )
 
-# Define server logic required to draw a histogram
 server <- function(input, output, session) {
   # If the URL contains a city on load, use that city instead of the default of ann arbor
   bookmarked_city <- isolate(getUrlHash()) %>% str_replace_all("-", " ") %>% str_remove("#")
@@ -100,9 +99,10 @@ server <- function(input, output, session) {
       incProgress(0, detail = "Gathering all stations within city")
       stations <- filter(station_to_city, city == input$city)
 
-      # Not every station has temperature data. This loops through all stations in
-      # a city and tries to find one with temperature data. If there are a lot of
-      # stations, this can take a while
+      # Not every station has both temperature and precipitation data. To deal
+      # with this, loop through all stations in a city try to extract whatever
+      # data is present. If a city has a lot of stations, like Fairbanks, AK,
+      # this this can take a while
       incProgress(1/4, detail = "Downloading data from all found stations")
       stations <- stations %>%
         mutate(url = build_station_url(station),
@@ -183,13 +183,13 @@ server <- function(input, output, session) {
                     alpha = 0.25) +
         geom_line(color = "white") +
         geom_point(data = extremes) +
-        ggtext::geom_richtext(data = extremes,
-                              aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-                              nudge_y = -1,
-                              label.color = NA,
-                              # Gives us a transparent background so text pops better
-                              fill = after_scale(alpha("white", .5)),
-                              vjust = 1 ) +
+        geom_richtext(data = extremes,
+                      aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                      nudge_y = -1,
+                      label.color = NA,
+                      # Gives us a transparent background so text pops better
+                      fill = after_scale(alpha("white", .5)),
+                      vjust = 1 ) +
         labs(y = "temperature (&#176; F)",
              x = "",
              title = glue("{input$city} temperature over year")) +
