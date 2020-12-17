@@ -154,15 +154,18 @@ server <- function(input, output, session) {
 ```
 
 ## Performance with caching
-- Biggest difference seen when toggling back and forth
-  
+
+So how much of a benefit do we get from adding those three `bindCache()` calls to our code? An easy way to see is to just run and compare before and after. There is absolutely a big impact, with the greatest impact seen with the "previous city" button. The act of retrieving and displaying the previous city is almost instant, compared to the non-cached app. 
+
+<video width="70%" controls="controls">
+<source src="speed_comparison.webm" type="video/webm">
+</video>
+_Speed comparison of toggling back and forth between a cached and non-cached app. The cached app changes the city almost instantly with no loading needed._
+
 ## Tuning Caching
 - Disk cache
 - App cache
   - Will speed up app for future user's too
   - Common cities will be almost instant
 - Cache size
-
-## `bindCache()` vs `renderCachedPlot()`
-- They're the same
 
