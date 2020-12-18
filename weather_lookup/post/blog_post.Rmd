@@ -162,6 +162,39 @@ So how much of a benefit do we get from adding those three `bindCache()` calls t
 </video>
 _Speed comparison of toggling back and forth between a cached and non-cached app. The cached app changes the city almost instantly with no loading needed._
 
+
+We can be a bit more objective with this comparison by using `shinytest`. We can record a typical use of the app and then replay the usage on the app with and without caching. We can wrap this test in a function and use the `bench` package to compare the runtimes over multiple sessions. 
+
+```{r, eval = FALSE, echo = TRUE}
+run_usage_test <- function(app_dir){
+  app <- ShinyDriver$new(app_dir, seed = 42)
+  # Using a seed because the app randomly chooses city in rnd_city button and
+  # initial back button
+
+  app$snapshotInit("mytest")
+  app$setInputs(city = "")
+  app$setInputs(city = "Minneapolis, MN")
+  app$setInputs(city = "")
+  app$setInputs(city = "Houston, TX")
+  app$setInputs(prev_city = "click")
+  app$setInputs(prev_city = "click")
+  app$setInputs(prev_city = "click")
+  app$setInputs(city = "New York, NY")
+  app$setInputs(prev_city = "click")
+  app$setInputs(prev_city = "click")
+}
+
+# Compare runtimes
+bench::mark(run_usage_test("cached_app/"),
+            run_usage_test("uncached_app/"),
+            iterations = 15,
+            check = FALSE)
+```
+
+![](runtime_comparison.png)
+
+It's important to note that the most time-consuming aspect of these tests is actually starting the `shinytest` instance, so the difference in usable speed is rather drastic. 
+
 ## Tuning Caching
 - Disk cache
 - App cache
