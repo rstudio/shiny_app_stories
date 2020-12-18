@@ -172,9 +172,7 @@ run_usage_test <- function(app_dir){
   # initial back button
 
   app$snapshotInit("mytest")
-  app$setInputs(city = "")
   app$setInputs(city = "Minneapolis, MN")
-  app$setInputs(city = "")
   app$setInputs(city = "Houston, TX")
   app$setInputs(prev_city = "click")
   app$setInputs(prev_city = "click")
@@ -194,11 +192,15 @@ bench::mark(run_usage_test("cached_app/"),
 ![](runtime_comparison.png)
 
 It's important to note that the most time-consuming aspect of these tests is actually starting the `shinytest` instance, so the difference in usable speed is rather drastic. 
+  
+## Setting cache scope
 
-## Tuning Caching
-- Disk cache
-- App cache
-  - Will speed up app for future user's too
-  - Common cities will be almost instant
-- Cache size
+There are two main ways to scope the cache in your app using the `cache` argument in `bind_cache()`: `"app"` and `"session"`. The default is `"app"` which allows cached reactive to be shared between different sessions of the app. This means that in our app the startup city (and other common cities) will be much quicker to load as only the very first user pays the computation price. This behavior is most of the time what you want, but if you have potentially sensitive data being stored within your reactives the `session` option may be better. This gives each session of the app its own cache, so there's no danger of information leaking between users. 
+
+A third and less common but still very useful option for scoping is disk scoping. This is accomplished by setting `bind_cache(..., cache = cachem::cache_disk())`. Disk caching will write the cache - as the name implies - to the disk. This allows the cache to persist beyond a single app, but - as disk is slower than memory - the speed of retrieval takes a hit. (A solution to this is to use a "[layered cache](https://github.com/r-lib/cachem/#layered-caches)," but that's beyond the scope of this article.)
+
+## Setting cache size
+
+One last knob you may want to tune when using `bindCache()` is the size of memory allocated to store results. 
+
 
