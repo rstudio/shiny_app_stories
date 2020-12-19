@@ -201,6 +201,18 @@ A third and less common but still very useful option for scoping is disk scoping
 
 ## Setting cache size
 
-One last knob you may want to tune when using `bindCache()` is the size of memory allocated to store results. 
+One last knob you may want to tune when using `bindCache()` is the size of memory allocated to store results. The default amount is 200 MB, meaning that all calculated values for your reactive will be cached until the size exceeds 200 MB, then the key-value pairs that was least recently used is discarded until the total size is under 200 MB again. You can modify this placing `shinyOptions(cache = cachem::cache_mem(size = <new_size_in_bytes>))` in  `app.R`, `server.R`, or `global.R`. For a more through explanation of options for scoping (such as default behavior of session-scoped cache,) see the section "Cache scope" in the `bind_cache()` documentation (`?shiny::bind_cache`). 
+
+## When to _not_ use caching
+
+Caching in your shiny apps is one of the easiest and most dramatic ways of making performance increases, however, it can sometimes be overkill or even make your app slower. A good rule of thumb is to reach for caching when your reactive:
+
+1. Takes a while to calculate
+2. Will likely be needed again
+3. The inputs (or cache-keys) are simple.
+
+For instance, caching a reactive that does something like building a string from basic inputs will likely yield little to no improvement because the time spent hashing the inputs into a key and searching for the result in the cache may take longer than simply re-building the value. For a good example of this see the [`station_info` output in the weather lookup app.](https://github.com/rstudio/shiny_showcase/blob/master/weather_lookup/app.R#L137-L145) As it just writes some simple HTML text caching is not needed.
+
+
 
 
