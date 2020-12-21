@@ -191,10 +191,8 @@ server <- function(input, output, session) {
                       # Gives us a transparent background so text pops better
                       fill = after_scale(alpha("white", .5)),
                       vjust = 1 ) +
-        labs(title = "Daily temperature") +
-        scale_y_continuous(name = "",
-                           breaks = axis_breaks,
-                           labels = axis_labels)
+        labs(title = "Daily temperature", y = "") +
+        scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
     })
   })
 
@@ -223,16 +221,16 @@ server <- function(input, output, session) {
         geom_rect(aes(xmin = date, xmax = date + months(1), ymin = 0, ymax = avg_precipitation),
                   fill = "steelblue",
                   color = "white") +
-        geom_text(aes(label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3)), x = date + days(15)),
+        geom_text(aes(x = date + days(15),
+                      # Make sure people know zero isn't exactly zero
+                      label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3))),
                   nudge_y = 0.05,
                   hjust = 0.5,
                   color = "black",
                   size = 5,
                   vjust = 0) +
-        labs(title = "Monthly precipitation") +
-        scale_y_continuous(name = "",
-                           breaks = axis_breaks,
-                           labels = axis_labels,
+        labs(title = "Monthly precipitation", y = "") +
+        scale_y_continuous(breaks = axis_breaks, labels = axis_labels,
                            expand = expansion(mult = c(0, 0.075)))
 
     })
