@@ -79,8 +79,6 @@ labeled_input <- function(id, label, input){
       input)
 }
 
-monthly_date_axis <- scale_x_date(date_labels = "%b", breaks = twelve_month_seq,
-                                  minor_breaks = NULL, expand = expansion(mult = c(0, 0)))
 
 # Map a function that may fail and simply remove the failures before returning
 # This helps because we have lots of things that may fail such as http requests

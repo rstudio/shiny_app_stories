@@ -2,6 +2,7 @@ library(shiny)
 library(bslib)
 library(ggplot2)
 library(thematic)
+library(patchwork)
 library(ggtext)
 library(glue)
 
@@ -46,8 +47,7 @@ ui <- fluidPage(
                     actionButton('prev_city', textOutput('prev_city_label'))),
       labeled_input("rnd_city_btn", "Try a random city",
                     actionButton('rnd_city', icon('dice')))),
-  plotOutput("tempPlot", height = 600),
-  plotOutput("prcpPlot"),
+  plotOutput("combined_plot", height = 850),
   div(id = "contributing_stations",
       span("Stations contributing data"),
       span("Click on station to go to its dataset."),
@@ -125,6 +125,8 @@ server <- function(input, output, session) {
       incProgress(1, detail = "Packaging data for app")
       list(temperature = temperature,
            precipitation = precipitation,
+           has_temp = nrow(temperature) != 0,
+           has_prcp = nrow(precipitation) != 0,
            station_info = stations %>%
              mutate(had_temp = !map_lgl(temp_res, is.null),
                     had_prcp = !map_lgl(prcp_res, is.null)) %>%
@@ -133,6 +135,7 @@ server <- function(input, output, session) {
   }) %>%
     # Our results will always be the same for a given city, so cache on that key
     bindCache(input$city)
+
 
   output$station_info <- renderUI({
     temp_icon <- as.character(icon('thermometer-half'))
@@ -146,12 +149,7 @@ server <- function(input, output, session) {
 
   output$prev_city_label <- renderText({ previous_city() })
 
-  output$tempPlot <- renderPlot({
-    validate(
-      need(nrow(city_data()$temperature) != 0,
-           glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
-    )
-
+  temp_plot <- reactive({
     withProgress(message = 'Building temperature plot', {
       incProgress(0/2, detail = "Finding hottest and coldest days")
 
@@ -171,10 +169,13 @@ server <- function(input, output, session) {
 
       incProgress(1/2, detail = "Rendering plot")
 
+      axis_breaks <- seq(100, -10, by = -10)
+      axis_labels <- as.character(axis_breaks)
+      axis_labels[1] <- paste0(axis_labels[1], "&#176; F")
       ggplot(city_data()$temperature, aes(x = date, y = avg)) +
         geom_richtext(data = context_points,
-                      aes(x = mdy("01-01-2000"), label = label, y = temp),
-                      hjust = 0, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
+                      aes(x = mdy("12-25-2000"), label = label, y = temp),
+                      hjust = 1, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
                       label.color = NA, fill = NA,
                       label.padding = grid::unit(rep(0, 4), "pt")) +
         geom_hline(data = context_points, aes(yintercept = temp)) +
@@ -190,41 +191,32 @@ server <- function(input, output, session) {
                       # Gives us a transparent background so text pops better
                       fill = after_scale(alpha("white", .5)),
                       vjust = 1 ) +
-        labs(y = "temperature (&#176; F)",
-             x = "",
-             title = glue("{input$city} temperature over year")) +
-        monthly_date_axis +
-        scale_y_continuous(breaks = seq(from = -10, to = 100, by = 10)) +
-        theme(text = element_text(size = 18),
-              axis.text.x = element_text(hjust = 0),
-              panel.grid.major = element_line(color = "grey70", size = 0.2),
-              panel.grid.minor = element_line(color = "grey85", size = 0.2),
-              axis.title.y = element_markdown(size = 18))
+        labs(title = "Daily temperature") +
+        scale_y_continuous(name = "",
+                           breaks = axis_breaks,
+                           labels = axis_labels)
     })
-  }) %>%
-    bindCache(input$city, sizePolicy = sizeGrowthRatio(width = 400, height = 600))
+  })
 
-  output$prcpPlot <- renderPlot({
-
-    validate(
-      need(nrow(city_data()$precipitation) != 0, # is NULL when no data available
-           glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
-    )
-
+  prcp_plot <- reactive({
     context_point <- tibble(
       label = c("9.47\": wettest month in Miami, FL"),
-      avg_precipitation = c(11.48)
+      avg_precipitation = c(9.47)
     )
 
     withProgress(message = 'Building precipitation plot', {
 
       incProgress(1/2, detail = "Rendering plot")
 
+      axis_breaks <- seq(8, 0, by = -2)
+      axis_labels <- as.character(axis_breaks)
+      axis_labels[1] <- paste(axis_labels[1], "inches")
+
       city_data()$precipitation %>%
         ggplot(aes(x = date, y = avg_precipitation)) +
         geom_richtext(data = context_point,
-                      aes(x = mdy("01-01-2000"), label = label, y = avg_precipitation),
-                      hjust = 0, vjust = 0, nudge_y = 0.05, nudge_x = 2,
+                      aes(x = mdy("12-25-2000"), label = label, y = avg_precipitation),
+                      hjust = 1, vjust = 0, nudge_y = 0.05, nudge_x = 2,
                       label.color = NA, fill = NA,
                       label.padding = grid::unit(rep(0, 4), "pt")) +
         geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
@@ -237,22 +229,44 @@ server <- function(input, output, session) {
                   color = "black",
                   size = 5,
                   vjust = 0) +
-        monthly_date_axis +
-        scale_y_continuous(breaks = seq(from = 0, to = 10, by = 2),
-                           expand = expansion(mult = c(0, 0.05))) +
-        labs(y = "inches of precipitation",
-             x = "",
-             title = glue("{input$city} precipitation over year")) +
-        theme(text = element_text(size = 18),
-              axis.text.x = element_text(hjust = 0),
-              panel.grid.major = element_line(color = "grey70", size = 0.2),
-              panel.grid.minor = element_line(color = "grey85", size = 0.2),
-              axis.title.y = element_markdown(size = 18))
+        labs(title = "Monthly precipitation") +
+        scale_y_continuous(name = "",
+                           breaks = axis_breaks,
+                           labels = axis_labels,
+                           expand = expansion(mult = c(0, 0.075)))
+
     })
+  })
+
+  output$combined_plot <- renderPlot({
+
+    if(city_data()$has_temp & city_data()$has_prcp){
+      p <- temp_plot() / prcp_plot()
+    } else if(city_data()$has_temp){
+      # E.g. Park City, MT
+      p <- temp_plot() / grid::textGrob(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
+    } else if(city_data()$has_prcp){
+      # E.g. Cedar Vale, KS
+      p <- grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")) / prcp_plot()
+    } else {
+      stop("You found a city that broke the app!")
+    }
+
+    p +
+      plot_layout(heights = c(2, 1)) +
+      plot_annotation(title = glue('Weather normals over the year for {input$city}'),
+                      theme = theme(plot.title = element_text(size = 30, hjust = 0.5))) &
+      scale_x_date(name = "", date_labels = "%b", breaks = twelve_month_seq,
+                   minor_breaks = NULL, expand = expansion(mult = c(0, 0))) &
+      theme(text = element_text(size = 18),
+            axis.text.x = element_text(hjust = 0),
+            axis.text.y = element_markdown(),
+            panel.grid.major = element_line(color = "grey70", size = 0.2),
+            panel.grid.minor = element_line(color = "grey85", size = 0.2))
+
   }) %>%
-    bindCache(input$city)
+    bindCache(input$city, sizePolicy = sizeGrowthRatio(width = 400, height = 600))
 }
 
 # Run the application
 shinyApp(ui = ui, server = server)
-# %>% run_with_themer()
