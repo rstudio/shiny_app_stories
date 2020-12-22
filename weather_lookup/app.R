@@ -238,6 +238,7 @@ server <- function(input, output, session) {
   })
 
   output$combined_plot <- renderPlot({
+    req(city_data())
 
     if(city_data()$has_temp & city_data()$has_prcp){
       p <- temp_plot() / prcp_plot()
@@ -246,7 +247,7 @@ server <- function(input, output, session) {
       p <- temp_plot() / grid::textGrob(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
     } else if(city_data()$has_prcp){
       # E.g. Cedar Vale, KS
-      p <- grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city.")) / prcp_plot()
+      p <- prcp_plot() / grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
     } else {
       stop("You found a city that broke the app!")
     }
