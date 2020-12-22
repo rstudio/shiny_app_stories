@@ -59,9 +59,10 @@ ui <- fluidPage(
       "For cities with multiple weather stations the average across all reporting stations is used.")
 )
 
+
 server <- function(input, output, session) {
   # If the URL contains a city on load, use that city instead of the default of ann arbor
-  bookmarked_city <- isolate(getUrlHash()) %>% str_replace_all("-", " ") %>% str_remove("#")
+  bookmarked_city <- parse_url_hash(isolate(getUrlHash()))
   current_city <- reactiveVal( if(bookmarked_city %in% unique_cities) bookmarked_city else "Ann Arbor, MI")
   updateSelectizeInput(inputId = "city", selected = isolate(current_city()))
 
@@ -81,7 +82,7 @@ server <- function(input, output, session) {
     current_city(input$city)
 
     # Update the query string so the app will know what to do.
-    updateQueryString(paste0("#",str_replace_all(current_city(), "\\s", "-")), mode = "push")
+    updateQueryString(make_url_hash(current_city()), mode = "push")
   })
 
   observe({
@@ -253,6 +254,7 @@ server <- function(input, output, session) {
     p +
       plot_layout(heights = c(2, 1)) +
       plot_annotation(title = glue('Weather normals over the year for {input$city}'),
+                      caption = glue("See more at connect.rstudioservices.com/explore_your_weather/{make_url_hash(input$city)}"),
                       theme = theme(plot.title = element_text(size = 30, hjust = 0.5))) &
       scale_x_date(name = "", date_labels = "%b", breaks = twelve_month_seq,
                    minor_breaks = NULL, expand = expansion(mult = c(0, 0))) &
