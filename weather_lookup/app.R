@@ -47,7 +47,7 @@ ui <- fluidPage(
                     actionButton('prev_city', textOutput('prev_city_label'))),
       labeled_input("rnd_city_btn", "Try a random city",
                     actionButton('rnd_city', icon('dice')))),
-  plotOutput("combined_plot", height = 850),
+  plotOutput("weather_plot", height = 850),
   div(id = "contributing_stations",
       span("Stations contributing data"),
       span("Click on station to go to its dataset."),
@@ -149,7 +149,7 @@ server <- function(input, output, session) {
 
   output$prev_city_label <- renderText({ previous_city() })
 
-  output$combined_plot <- renderPlot({
+  output$weather_plot <- renderPlot({
     req(city_data())
 
     withProgress(message = 'Building plots', max = 3, {
