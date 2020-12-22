@@ -152,22 +152,28 @@ server <- function(input, output, session) {
   output$combined_plot <- renderPlot({
     req(city_data())
 
-    withProgress(message = 'Building plots', {
+    withProgress(message = 'Building plots', max = 3, {
 
-      # Setup layout such that temperature data is top large plot unless it is missing when percipitation is the top plot¿
-      if(city_data()$has_temp & city_data()$has_prcp){
-        p <- build_temp_plot(city_data()$temperature) /
-          build_prcp_plot(city_data()$precipitation)
-      } else if(city_data()$has_temp){
-        # E.g. Park City, MT
-        p <- build_temp_plot(city_data()$temperature) /
-          grid::textGrob(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
-      } else if(city_data()$has_prcp){
-        # E.g. Cedar Vale, KS
-        p <- build_prcp_plot(city_data()$precipitation) /
-          grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
+      incProgress(1, detail = "Building temperature plot")
+      temp_plot <- if(city_data()$has_temp) {
+        build_temp_plot(city_data()$temperature)
       } else {
-        stop("You found a city that broke the app!")
+        grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
+      }
+
+      incProgress(2, detail = "Building precipitation plot")
+      prcp_plot <- if(city_data()$has_prcp) {
+        build_prcp_plot(city_data()$precipitation)
+      } else {
+        grid::textGrob(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
+      }
+
+      # Setup layout such that temperature data is top large plot unless it is missing when precipitation is the top plot
+      incProgress(3, detail = "Merging plots")
+      p <- if(city_data()$has_temp){
+        temp_plot / prcp_plot
+      } else {
+        prcp_plot / temp_plot
       }
 
       p +
