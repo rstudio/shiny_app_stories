@@ -11,6 +11,8 @@ midwest <- ggplot2::midwest %>%
 
 numeric_vars <- midwest %>% select_if(is.numeric) %>% colnames()
 
+B <- 500 # Number of bootstrap resamples to do
+
 ui <- fluidPage(
   theme = bslib::bs_theme(bootswatch = "flatly"),
   titlePanel("Bootstrapped Regressions"),
@@ -41,7 +43,6 @@ server <- function(input, output) {
     validate(need(input$y_var != input$x_var, "X and Y variables need to be different."))
     effect_sizes <- tibble(intercept = numeric(), effect_size = numeric())
 
-    B <- 500 # Number of bootstrap resamples to do
     withProgress(message = 'Bootstrap resampling', max = B, {
       for(i in 1:B){
         if((i %% 50) == 0) incProgress(i, paste("Itteration", i))
@@ -60,5 +61,4 @@ server <- function(input, output) {
   })
 }
 
-# Run the application
 shinyApp(ui = ui, server = server)
