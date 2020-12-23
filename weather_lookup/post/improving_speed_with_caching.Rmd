@@ -28,56 +28,64 @@ city_data <- flair_all("city_data()", color = city_data_color, before = "<code>"
 
 ## Summary
 
-Here we demonstrate the use of the new `bindCache()` function in Shiny to greatly speedup a Shiny app that queries an NOAA weather station data API. The use of caching not only speeds up the app for end users but relieves pressure from the API. In this post we will demonstrate the adding of `bindCache` to existing reactive expressions, explaining where and why it should be used along with some potential gotchas of doing so. 
+Here we demonstrate the use of the new `bindCache()` function in Shiny to greatly speedup a Shiny app that queries an NOAA weather station data API. We will demonstrate the adding of `bindCache` to existing reactive expressions, explaining where and why it should be used along with some potential gotchas of doing so. 
+
 
 ## Weather App
 
 The code and results in this post come from the [weather lookup app.](connect.rstudioservices.com/explore_your_weather/) To gain an understanding of the app check out the [accompanying post](shiny.com/articles/weather_app_intro) introducing it.
 
+<div class = "centered_img"> 
+<img src="full_app.png" width = 70%/> 
+
+_Screenshot of the [weather lookup app.](connect.rstudioservices.com/explore_your_weather/)_
+</div>
+
 
 ## Performance
 
-While this application we've built is interesting and potentially useful, it can be a bit slow. This is because the querying of the NOAA API is typically a slow process and may need to be repeated many times for cities with lots of stations. Along with the time the `city_data()` reactive takes, each one of the plots takes a non-negligible amount of time to render. All of this adds up to an interactive experience of less-than-light-speed. While using progress messages to alert the user to what's happening can help, ideally we could just make the app faster...
+Without caching enabled, the weather lookup app is interesting and potentially useful, but it can be a bit slow. This is because the querying of any API for data is going to be a bottleneck in the responsiveness of your app. In the weather app this is compounded by the fact that for any given city we need to do separate queries for every station present. 
+
+Even after the API queries are finished, there's the additional work needing to be done with cleaning and averaging of all the data. While this is faster than querying the API it still takes time. Along with the time the `city_data()` reactive takes, plot output is a complicated mashup of non-trivial ggplots combined with the `patchwork` package. 
+
+All of these reactive computations add up to an interactive experience of less-than-light-speed. While using progress messages to alert the user to what's happening can help, ideally we could just make the app faster...
 
 
 ## Adding Caching
 
 A convenient fact about our app is that it will always look the same when a given city is selected. The normals will always be the same because the same stations will always be queried etc.. This means we can use __caching__ to pull up the results for a city by simply remembering the output of our reactive the last time the city was seen. 
 
-As of Shiny V1.6, adding caching to any reactive is as easy as piping the reactive to the function `bindCache()`. You tell `bindCache()` what the important input variable is that determines the output of the reactive and Shiny will automatically setup a cache store and most likely give you large speed improvements. 
+As of Shiny V1.6, adding caching to any reactive is as easy as piping the reactive to the function `bindCache()`. You tell `bindCache()` what the important input variable is that determines the output of the reactive and Shiny will automatically setup a cache store and your app will ([most likely](#when-to-not-use-caching)) see large speed improvements. 
 
-This operates just like the function `renderCachedPlot()` that was introduced in Shiny v1.2, however now any reactive variable can be cached (in fact, `renderCachedPlot()` now uses `bindCache` under-the-hood.)
-
-To take advantage of caching we will add it in three separate places in the app: our `r city_data` reactive, the temperature plot, and the precipitation plot. 
+To take advantage of caching we will add it in three separate places in the app: our `r city_data` reactive, the results plot.
 
 ```{r, echo = FALSE}
 decorate('caching-added') %>% 
-  flair("bindCache(input$city)") %>%
-  flair("city_data", color = city_data_color) %>% 
-  flair( "output$tempPlot", color = temp_color) %>% 
-  flair("output$prcpPlot", color = prcp_color)
+  flair("bindCache(input$city)")
 ```
 
 ```{r caching-added, eval = FALSE, echo = FALSE}
 server <- function(input, output, session) {
   ...
   city_data <- reactive({...}) %>%
-    # Our results will always be the same for a given city
     bindCache(input$city)
 
-  output$tempPlot <- renderPlot({...}) %>%
-    bindCache(input$city)
-  
-  output$prcpPlot <- renderPlot({...}) %>%
+  output$weather_plot <- renderPlot({...}) %>%
     bindCache(input$city)
   ...
 }
 ```
 
+
+This operates just like the function [`renderCachedPlot()`](https://shiny.rstudio.com/reference/shiny/1.5.0/renderCachedPlot.html) that was introduced in Shiny v1.2, however now _any_ reactive variable can be cached (in fact, [`renderCachedPlot()`](https://shiny.rstudio.com/reference/shiny/1.5.0/renderCachedPlot.html) now uses `bindCache` under-the-hood.)
+
 ## Performance with caching
 
-So how much of a benefit do we get from adding those three `bindCache()` calls to our code? An easy way to see is to just run and compare before and after. There is absolutely a big impact, with the greatest impact seen with the "previous city" button. The act of retrieving and displaying the previous city is almost instant, compared to the non-cached app. 
+So how much of a benefit do we get from adding those three `bindCache()` calls to our code? We can investigate this in two ways: a "real world" side-by-side test and a more formal scripted test scenario. 
 
+### Side-by-side comparison
+
+A great place to see the benefits of caching in our app is with the "previous city" button. Because this button is provided and the concept of comparing two cities is appealing, once a given city is looked up by a user it automatically becomes much more likely to be requested again. 
 
 <div class = "centered_img" style = "width: 70%; margin: 0 auto;"> 
 
@@ -89,6 +97,10 @@ So how much of a benefit do we get from adding those three `bindCache()` calls t
 _Speed comparison of toggling back and forth between a cached and non-cached app. The cached app changes the city almost instantly with no loading needed._
 </div>
 
+
+The act of retrieving and displaying the previous city is almost instant, compared to the non-cached app. Caching is perfect for these scenarios. 
+
+### Using `shinytest` to compare app speed
 
 We can be a bit more objective with this comparison by using `shinytest`. We can record a typical use of the app and then replay the usage on the app with and without caching. We can wrap this test in a function and use the `bench` package to compare the runtimes over multiple sessions. 
 
@@ -126,11 +138,14 @@ _App runtimes of 15 separate sessions for both cached and non-cached versions of
 
 It's important to note that the most time-consuming aspect of these tests is actually starting the `shinytest` instance, so the difference in usable speed is rather drastic. 
   
+
 ## Setting cache scope
 
 There are two main ways to scope the cache in your app using the `cache` argument in `bind_cache()`: `"app"` and `"session"`. The default is `"app"` which allows cached reactive to be shared between different sessions of the app. This means that in our app the startup city (and other common cities) will be much quicker to load as only the very first user pays the computation price. This behavior is most of the time what you want, but if you have potentially sensitive data being stored within your reactives the `session` option may be better. This gives each session of the app its own cache, so there's no danger of information leaking between users. 
 
 A third and less common but still very useful option for scoping is disk scoping. This is accomplished by setting `bind_cache(..., cache = cachem::cache_disk())`. Disk caching will write the cache - as the name implies - to the disk. This allows the cache to persist beyond a single app, but - as disk is slower than memory - the speed of retrieval takes a hit. (A solution to this is to use a "[layered cache](https://github.com/r-lib/cachem/#layered-caches)," but that's beyond the scope of this article.)
+
+One benefit of app-level scope for our app is that large cities such as New York or Los Angeles are likely going to be viewed a lot. Once these cities are requested by the first user the app will be much faster for a large portion of the userbase. The nice thing is you don't need to try and predict what will be popular, the cache does it for you.
 
 ## Setting cache size
 
