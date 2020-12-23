@@ -38,9 +38,13 @@ _Screenshot of the weather lookup app._
 </div>
 
 
+## What the app does
+
+The goal for the app is to be a tool to quickly get a broad-level grasp of the weather in a given city. Users should be able to answer questions like "how hot is a typical March day?" and "what's the wettest month?" for their city of choice. 
+
 ## Inspiration for app
 
-The goal for the app was to build a tool to quickly get a broad-level grasp of the weather in a given city. Questions such as "How hot does it get?" and "what's the wettest month?". An inspiration for the design came from the story ["How Much Warmer Was Your City in 2015?"](https://www.nytimes.com/interactive/2016/02/19/us/2015-year-in-weather-temperature-precipitation.html#new-york_ny) in the New York Times, by [K.K. Rebecca Lai.](https://www.nytimes.com/by/kk-rebecca-lai) 
+Inspiration for the design came from the story ["How Much Warmer Was Your City in 2015?"](https://www.nytimes.com/interactive/2016/02/19/us/2015-year-in-weather-temperature-precipitation.html#new-york_ny) in the New York Times, by [K.K. Rebecca Lai.](https://www.nytimes.com/by/kk-rebecca-lai) 
 
 
 <div class = "centered_img"> 
@@ -51,13 +55,10 @@ The goal for the app was to build a tool to quickly get a broad-level grasp of t
 [_New York Times article providing inspiration for app design._](https://www.nytimes.com/interactive/2016/02/19/us/2015-year-in-weather-temperature-precipitation.html)
 </div>
 
-
-Our app isn't a direct copy, as the focus is more on just getting an idea of weather rather than comparing to a given year. Also, unlike the NYTimes article that uses javascript, our app is written completely in R (with a tiny bit of CSS). 
+While the inspiration is obvious, our app isn't a _direct_ copy. Our focus is more on getting a general idea of typical weather rather than comparing to a given year. Also, unlike the NYTimes article that uses javascript, our app is written completely in R (with a tiny bit of CSS). 
 
 
 ## NOAA Temperature Normals
-
-In addition to different coding techniques from the NYT inspiration app, our app uses data from a different source.
 
 The data driving the application comes from the [National Oceanic and Atmospheric Association (NOAA)](https://www.noaa.gov/). In the NOAA's open data portal they have a set of data for ["climate normals."](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/climate-normals) These data provide the "normal" or typical values of various climate measures for ~9.7 thousand weather stations around the US based on readings from 1981 to 2010. 
 
@@ -86,10 +87,11 @@ There are lots of interesting measures available in these "normals" but what our
 
 ## App flow
 
-When thinking about how a Shiny app works it helps to think about it as made up of the main important reactive variables/expressions: what they depend on and what depends on them. Our app is relatively simple, with one main `reactive()` expression and plot.
+When thinking about how a Shiny app works it helps to think about the main important reactive variables/expressions: what they depend on and what depends on them. Our app is relatively simple, with one main `reactive()` variable, an output plot, and some dynamic UI to show information about stations within a city.
 
-### `r city_data` 
-The state of the app centers around the currently selected city. When a city is selected, the app then reaches out to the NOAA servers and `r flair_all("downloads the data for every station", color = data_color)` residing in that city. From this data the `r flair_all("temperature", color = temp_color)` and `r flair_all("precipitation", color = prcp_color)` normals are extracted and averaged together to give an "averaged average" portrait of the city's weather. This parsed data is then stored in `reactive` value called `r city_data`...
+### `r city_data` reactive
+
+The state of the app centers around the currently selected city. When a city is selected, the app then reaches out to the NOAA servers and `r flair_all("downloads the data for every station", color = data_color)` residing in that city. From this data the `r flair_all("temperature", color = temp_color)` and `r flair_all("precipitation", color = prcp_color)` normals are extracted and averaged together to give an "averaged average" portrait of the city's weather. The results of this querying and parsing is stored in the `reactive` value `r city_data`...
 
 ```{r, echo = FALSE}
 decorate('hefty-reactive') %>% 
@@ -138,12 +140,10 @@ server <- function(input, output, session) {
 
 _See full code on [github](https://github.com/rstudio/shiny_showcase/blob/master/weather_lookup/app.R#L96-L133)_
 
-This is a computationally intensive reactive value that does a lot of work. 
-
 
 ### `output$weather_plot`
 
-The main centerpeice of the app is the output plot. This plot is actually two separate ggplots that are generated using the data stored in `r city_data` reactive. 
+The main centerpiece of the app is the output plot. This plot is actually two separate ggplots that are generated using the data stored in `r city_data` reactive. 
 
 One of the plots shows temperature and the other shows precipitation. Both of these plots are themselves complex `ggplot2` objects, with many layers and annotations. Full ggplot code to generate each plot is available on github: [temperature,](https://github.com/rstudio/shiny_showcase/blob/master/weather_lookup/helpers.R#L112-L152) [precipitation](https://github.com/rstudio/shiny_showcase/blob/master/weather_lookup/helpers.R#L79-L110).
 
@@ -181,13 +181,27 @@ This pane is generated with series of `div` tags inserted into the app using the
 _Example station info for Ann Arbor, MI. Notice that the first station is missing precipitation data._
 </div>
 
+
 ### Previous city button
 
-A lot of times one may be interested in comparing the weather between two cities. This is made easier in the app by having a previous city button. This button simply sets the city to the city viewed just before the current city. This enables quick toggling back and forth between two cities to see the differences. 
+A lot of times one may be interested in comparing the weather between two cities. A previous city button allows this interaction. the button simply sets the city to the city viewed just before the current city. To quickly toggle back and forth between two cities to see the differences the user simply needs to tap the button repeatedly. 
 
-<div class = "centered_img"> 
-<img src="prev_city_button.png" width = 70%/> 
+<div class = "centered_img" style = "width: 70%; margin: 0 auto;"> 
+
+<video width="100%" controls="controls" style = "margin: 0 auto; display: block;">
+<source src="previous_city_button.webm" type="video/webm">
+</video>
+
+
+_The previous city button lets the user quickly toggle between two cities to compare them._
 </div>
+
+
+## Learning more
+
+Now that we have introduced the app. Checkout the followup articles that detail how the app uses caching to provide a speedy user experience and how we give the app a bespoke look with the `bslib` package (coming soon).
+
+Also be sure to checkout the [github repo with all the apps code.](https://github.com/rstudio/shiny_showcase/tree/master/weather_lookup)
 
 
 
