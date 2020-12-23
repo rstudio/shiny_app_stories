@@ -138,6 +138,8 @@ server <- function(input, output, session) {
     bindCache(input$city)
 
   output$station_info <- renderUI({
+    # Let the user know what stations went into the plot they're seeing and
+    # allow them to explore the data directly
     pmap(city_data()$station_info,
          function(url, station, had_temp, had_prcp, ...){
            div(class = "station_bubble",
