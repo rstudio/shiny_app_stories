@@ -57,7 +57,7 @@ A convenient fact about our app is that it will always look the same when a give
 
 As of Shiny V1.6, adding caching to any reactive is as easy as piping the reactive to the function `bindCache()`. You tell `bindCache()` what the important input variable is that determines the output of the reactive and Shiny will automatically setup a cache store and your app will ([most likely](#when-to-not-use-caching)) see large speed improvements. 
 
-To take advantage of caching we will add it in three separate places in the app: our `r city_data` reactive, the results plot.
+To take advantage of caching we will add it in three separate places in the app: our `r city_data` reactive and the results plot `output$weather_plot`.
 
 ```{r, echo = FALSE}
 decorate('caching-added') %>% 
@@ -136,20 +136,73 @@ _App runtimes of 15 separate sessions for both cached and non-cached versions of
 </div>
 
 
-It's important to note that the most time-consuming aspect of these tests is actually starting the `shinytest` instance, so the difference in usable speed is rather drastic. 
+It's important to note that the most time-consuming aspect of these tests is actually starting the `shinytest` instance, so the difference in usable speed is even greater than seen here. 
   
 
 ## Setting cache scope
 
-There are two main ways to scope the cache in your app using the `cache` argument in `bind_cache()`: `"app"` and `"session"`. The default is `"app"` which allows cached reactive to be shared between different sessions of the app. This means that in our app the startup city (and other common cities) will be much quicker to load as only the very first user pays the computation price. This behavior is most of the time what you want, but if you have potentially sensitive data being stored within your reactives the `session` option may be better. This gives each session of the app its own cache, so there's no danger of information leaking between users. 
+It's possible to change the scope of your caching (i.e. who/what can read from the cache) using the `cache` argument in `bind_cache()`.
 
-A third and less common but still very useful option for scoping is disk scoping. This is accomplished by setting `bind_cache(..., cache = cachem::cache_disk())`. Disk caching will write the cache - as the name implies - to the disk. This allows the cache to persist beyond a single app, but - as disk is slower than memory - the speed of retrieval takes a hit. (A solution to this is to use a "[layered cache](https://github.com/r-lib/cachem/#layered-caches)," but that's beyond the scope of this article.)
+### App-level caching
+
+The default cache scope is `"app"`. This scoping allows cached reactive to be shared between different sessions of the app. 
+
+```r
+# By default, cached values of my_reactive() are available to all users of app
+my_reactive <- reactive({...}) %>%
+    bindCache(input$key)
+    
+# Equivalent to
+my_reactive <- reactive({...}) %>%
+    bindCache(input$key, cache = "app")
+```
 
 One benefit of app-level scope for our app is that large cities such as New York or Los Angeles are likely going to be viewed a lot. Once these cities are requested by the first user the app will be much faster for a large portion of the userbase. The nice thing is you don't need to try and predict what will be popular, the cache does it for you.
 
+### Session-level caching
+
+For most situations app-level caching the best option, however if you have potentially sensitive data being stored within your reactives the `session` option may be better. 
+
+```r
+# Cached values of my_reactive() are only shared within the same app session
+my_reactive <- reactive({...}) %>%
+    bindCache(input$key, cache = "session")
+```
+
+This gives each app usage "session" its own cache, so there's no danger of information leaking between users. 
+
+### Disk-level caching
+
+A third and less common but still very useful option for scoping is disk scoping. This is accomplished by passing a cache function from the `cachem` package directly to the `cache` option.
+
+```r
+# Cached values of stored on disk and thus persist between app restarting 
+my_reactive <- reactive({...}) %>%
+    bindCache(input$key, cache = cachem::cache_disk())
+```
+
+Disk caching will write the cache - as the name implies - to the disk. This allows the cache to persist beyond a single app, but - as disk is slower than memory - the speed of retrieval takes a hit. (A solution to this is to use a "[layered cache](https://github.com/r-lib/cachem/#layered-caches)," but that's beyond the scope of this article.)
+
+
+
 ## Setting cache size
 
-One last knob you may want to tune when using `bindCache()` is the size of memory allocated to store results. The default amount is 200 MB, meaning that all calculated values for your reactive will be cached until the size exceeds 200 MB, then the key-value pairs that was least recently used is discarded until the total size is under 200 MB again. You can modify this placing `shinyOptions(cache = cachem::cache_mem(size = <new_size_in_bytes>))` in  `app.R`, `server.R`, or `global.R`. For a more through explanation of options for scoping (such as default behavior of session-scoped cache,) see the section "Cache scope" in the `bind_cache()` documentation (`?shiny::bind_cache`). 
+One last knob you may want to tune when using `bindCache()` is the size of memory allocated to store results. The default amount is 200 MB, meaning that all calculated values for your reactive will be cached until the size exceeds 200 MB, then the key-value pairs that was least recently used is discarded until the total size is under 200 MB again. For app-scoped cache you can modify this with the `cache` Shiny option.
+
+```r
+# app.R
+
+# Give app cache 512mb to work with
+shinyOptions(cache = cachem::cache_mem(max_size = 512 * 1024^2))
+
+ui <- fluidPage(...)
+
+server <- function(input, output, session){...}
+
+shinyApp(ui = ui, server = server)
+```
+
+For a more through explanation of options for scoping (such as default behavior of session-scoped cache,) see the section "Cache scope" in the `bindCache()` documentation (`?shiny::bindCache`). 
 
 ## When to _not_ use caching
 
