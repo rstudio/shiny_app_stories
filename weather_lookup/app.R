@@ -138,13 +138,12 @@ server <- function(input, output, session) {
     bindCache(input$city)
 
   output$station_info <- renderUI({
-    temp_icon <- as.character(icon('thermometer-half'))
-    prcp_icon <- as.character(icon('cloud-rain'))
-    city_data()$station_info %>%
-      glue_data("<div class='station_bubble'> <a href={url} target='_blank'>",
-                "{station} {ifelse(had_temp, temp_icon, '')} {ifelse(had_prcp, prcp_icon, '')}",
-                "</a></div>") %>%
-      HTML()
+    pmap(city_data()$station_info,
+         function(url, station, had_temp, had_prcp, ...){
+           div(class = "station_bubble",
+               a(href = url, target = "_blank",
+                 station, if(had_temp) icon('thermometer-half'), if(had_prcp) icon('cloud-rain')))
+         })
   })
 
   output$prev_city_label <- renderText({ previous_city() })
