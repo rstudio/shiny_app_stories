@@ -114,10 +114,12 @@ build_temp_plot <- function(temp_data){
     extremes <- bind_rows(
       arrange(temp_data, -max, -avg, -min)[1,] %>%
         mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
-                            "Avg max temp = {format(max, digits = 3)}&#176;")),
+                            "Avg max temp = {format(max, digits = 3)}&#176;"),
+               pos = max),
       arrange(temp_data, min, avg, max)[1,] %>%
         mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
-                            "Avg min temp = {format(min, digits = 3)}&#176;"))
+                            "Avg min temp = {format(min, digits = 3)}&#176;"),
+               pos = min)
     )
 
     context_points <- tibble(
@@ -139,9 +141,9 @@ build_temp_plot <- function(temp_data){
                   fill = "steelblue",
                   alpha = 0.25) +
       geom_line(color = "white") +
-      geom_point(data = extremes) +
+      geom_point(data = extremes, aes(y = pos)) +
       geom_richtext(data = extremes,
-                    aes(label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                    aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
                     nudge_y = -1,
                     label.color = NA,
                     # Gives us a transparent background so text pops better
