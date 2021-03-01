@@ -6,27 +6,12 @@ library(patchwork)
 library(ggtext)
 library(glue)
 
-
 source('helpers.R')
 
-
-color_palettes <- list(
-  hot = list(
-    fg = "#bd0026",
-    primary = "#f03b20",
-    secondary = "#fecc5c"
-  ),
-  cold = list(
-    fg = "#0061f2",
-    primary = "#00c1ff",
-    secondary = "#7fedf0"
-  ),
-  normal = list(
-    fg = "#636363",
-    primary = "#969696",
-    secondary = "#31a354"
-  )
-)
+# These control how the app looks when the daily temperature above, within, or
+# below the comfortable temperature threshold
+hot_color <- "#bd0026"
+cold_color <- "#0061f2"
 
 # Setup a bslib theme based on the temperature type. "Hot" colors our app
 # red/orange, cold gives us a blue app and "normal" doesn't touch the colors of
@@ -42,14 +27,14 @@ make_theme <- function(type = "normal"){
     my_theme %>%
       bs_theme_update(
         bg = "white",
-        fg = "#0061f2",
+        fg = cold_color,
         primary = "#00c1ff",
         secondary = "#7fedf0")
   } else if(type == "hot") {
     my_theme %>%
       bs_theme_update(
         bg = "white",
-        fg = "#bd0026",
+        fg = hot_color,
         primary = "#f03b20",
         secondary = "#fecc5c")
   } else {
@@ -92,8 +77,8 @@ ui <- fluidPage(
       uiOutput('station_info') ),
   div(id = "control_thresholds",
     div("The theme of this app updates based on the current city's average temperature for the current day.",
-        "By default if the temperature is below the the comfortable range the app becomes", span(style = glue("color:{color_palettes$cold$fg}"), "blue and \"icy\""),
-        "and if it's above it becomes", span(style = glue("color:{color_palettes$hot$fg}"), "red and \"firey\"."), "You can adjust these thresholds here."),
+        "By default if the temperature is below the the comfortable range the app becomes", span(style = glue("color:{cold_color}"), "blue and \"icy\""),
+        "and if it's above it becomes", span(style = glue("color:{hot_color}"), "red and \"firey\"."), "You can adjust these thresholds here."),
       sliderInput("temp_thresholds", "Set comfortable temperature range", min = 0, max = 100, value = c(30, 80), post = " deg", width = "100%"),
   ),
   div(id = "data_info",
@@ -258,16 +243,13 @@ server <- function(input, output, session) {
     }
     session$setCurrentTheme(make_theme(type))
 
-
     div(
       icon("calendar-day"), "Today's Weather:",
       format(Sys.Date(), '%B %d'), "in ", strong(input$city), "is normally ",
       HTML(print_deg(avg_temp, add_F = TRUE)), "with a high of", HTML(print_deg(todays_weather()$max)),
       " and a low of", HTML(print_deg(todays_weather()$min))
     )
-
   })
-
 
 }
 
