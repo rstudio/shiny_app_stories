@@ -115,46 +115,50 @@ print_deg <- function(degrees, add_F = FALSE){
 
 build_temp_plot <- function(temp_data){
 
-    extremes <- bind_rows(
-      arrange(temp_data, -max, -avg, -min)[1,] %>%
-        mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
-                            "Avg max temp = {print_deg(max)}"),
-               pos = max),
-      arrange(temp_data, min, avg, max)[1,] %>%
-        mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
-                            "Avg min temp = {print_deg(min)}"),
-               pos = min)
-    )
+  extremes <- bind_rows(
+    arrange(temp_data, -max, -avg, -min)[1,] %>%
+      mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
+                          "Avg max: {print_deg(max)}"),
+             pos = max),
+    arrange(temp_data, min, avg, max)[1,] %>%
+      mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
+                          "Avg min: {print_deg(min)}"),
+             pos = min),
+    temp_data %>%
+      filter(month(date) == month(Sys.Date()), day(date) == day(Sys.Date())) %>%
+      mutate(label = glue("Avg for {format(date, '%B %d')}: {print_deg(avg)}"),
+             pos = avg)
+  )
 
-    context_points <- tibble(
-      label = c("107&#176;: hottest day in Pheonix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
-      temp = c(107, -14.9)
-    )
+  context_points <- tibble(
+    label = c("107&#176;: hottest day in Pheonix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
+    temp = c(107, -14.9)
+  )
 
-    axis_breaks <- seq(100, -10, by = -10)
-    axis_labels <- as.character(axis_breaks)
-    axis_labels[1] <- print_deg(axis_labels[1], add_F=TRUE)
-    ggplot(temp_data, aes(x = date, y = avg)) +
-      geom_richtext(data = context_points,
-                    aes(x = mdy("12-25-2000"), label = label, y = temp),
-                    hjust = 1, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
-                    label.color = NA, fill = NA,
-                    label.padding = grid::unit(rep(0, 4), "pt")) +
-      geom_hline(data = context_points, aes(yintercept = temp)) +
-      geom_ribbon(aes(ymin = min, ymax = max),
-                  fill = "steelblue",
-                  alpha = 0.25) +
-      geom_line(color = "white") +
-      geom_point(data = extremes, aes(y = pos)) +
-      geom_richtext(data = extremes,
-                    aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-                    nudge_y = -1,
-                    label.color = NA,
-                    # Gives us a transparent background so text pops better
-                    fill = after_scale(alpha("white", .5)),
-                    vjust = 1 ) +
-      labs(title = "Daily temperature", y = "") +
-      scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
+  axis_breaks <- seq(100, -10, by = -10)
+  axis_labels <- as.character(axis_breaks)
+  axis_labels[1] <- print_deg(axis_labels[1], add_F=TRUE)
+  ggplot(temp_data, aes(x = date, y = avg)) +
+    geom_richtext(data = context_points,
+                  aes(x = mdy("12-25-2000"), label = label, y = temp),
+                  hjust = 1, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
+                  label.color = NA, fill = NA,
+                  label.padding = grid::unit(rep(0, 4), "pt")) +
+    geom_hline(data = context_points, aes(yintercept = temp)) +
+    geom_ribbon(aes(ymin = min, ymax = max),
+                fill = "steelblue",
+                alpha = 0.25) +
+    geom_line(color = "white") +
+    geom_point(data = extremes, aes(y = pos)) +
+    geom_richtext(data = extremes,
+                  aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                  vjust = c(1,1,0),
+                  nudge_y = c(-1,-1,1),
+                  label.color = NA,
+                  # Gives us a transparent background so text pops better
+                  fill = after_scale(alpha("white", .5))) +
+    labs(title = "Daily temperature", y = "") +
+    scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
 }
 
 # Add a nicely styled and centered label above a given input
