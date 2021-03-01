@@ -1,8 +1,17 @@
+
+body > div {
+  max-width: 1200px;
+}
+
+.container-fluid > * {
+  padding-bottom: 2rem;
+}
+
 #header {
   display: grid;
   justify-items: center;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr) 3rem;
   align-items: flex-start;
 }
 
@@ -39,10 +48,44 @@
 #city-selector { grid-area: 2 / 2 / 3 / 3; }
 #prev_city_btn { grid-area: 2 / 1 / 3 / 2; }
 #rnd_city_btn  { grid-area: 2 / 3 / 3 / 4; }
+#todays_weather {grid-area: -2 / 1 / -1/ -1;}
 
 button { width: 200px; }
 button > div {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* Places the source link in upper right of page */
+#source_link {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  font-size: 0.9rem;
+  font-weight: lighter;
+}
+
+#control_thresholds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
+  grid-gap: 2rem;
+  justify-content: center;
+  justify-items: center;
+  padding: 1rem;
+  border-top: 1px solid #dfdfdf;
+  border-bottom: 1px solid #dfdfdf;
+}
+
+#control_thresholds > div {
+  font-size: 0.85rem;
+  color: #515151;
+}
+
+span.cold {
+  color: blue;
+}
+
+span.hot {
+  color: blue;
 }

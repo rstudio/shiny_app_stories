@@ -109,16 +109,20 @@ build_prcp_plot <- function(prcp_data){
                        expand = expansion(mult = c(0, 0.075)))
 }
 
+print_deg <- function(degrees, add_F = FALSE){
+  paste0(round(as.numeric(degrees),2), "&#176;", if(add_F) " F" else "")
+}
+
 build_temp_plot <- function(temp_data){
 
     extremes <- bind_rows(
       arrange(temp_data, -max, -avg, -min)[1,] %>%
         mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
-                            "Avg max temp = {format(max, digits = 3)}&#176;"),
+                            "Avg max temp = {print_deg(max)}"),
                pos = max),
       arrange(temp_data, min, avg, max)[1,] %>%
         mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
-                            "Avg min temp = {format(min, digits = 3)}&#176;"),
+                            "Avg min temp = {print_deg(min)}"),
                pos = min)
     )
 
@@ -129,7 +133,7 @@ build_temp_plot <- function(temp_data){
 
     axis_breaks <- seq(100, -10, by = -10)
     axis_labels <- as.character(axis_breaks)
-    axis_labels[1] <- paste0(axis_labels[1], "&#176; F")
+    axis_labels[1] <- print_deg(axis_labels[1], add_F=TRUE)
     ggplot(temp_data, aes(x = date, y = avg)) +
       geom_richtext(data = context_points,
                     aes(x = mdy("12-25-2000"), label = label, y = temp),
