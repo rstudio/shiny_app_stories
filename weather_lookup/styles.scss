@@ -67,8 +67,13 @@ body > div {
 .station_bubble {
   border:1px solid black;
   border-radius: 9px;
-  padding: 5px; margin: 5px
+  padding: 5px;
+  margin: 5px;
+  background: $secondary;
 }
+/* Make station bubble cards respect the colors of the theme */
+.station_bubble > a{ color: $black; }
+
 
 #data_info {
   font-size: small;

@@ -22,11 +22,7 @@ make_theme <- function(type = "normal"){
                        success = "#006837",
                        base_font = font_google("Righteous"),
                        "font-size-base" = "1.1rem") %>%
-    # make station bubble cards respect the colors of the theme
-    bs_add_rules(list(
-      ".station_bubble { background: $secondary; }",
-      ".station_bubble > a{ color: $black; }"
-    ))
+    bs_add_rules(sass::sass_file("styles.scss"))
 
   if(type == "cold"){
     my_theme %>%
@@ -63,7 +59,6 @@ get_random_city <- function(){ sample(unique_cities, 1) }
 
 ui <- fluidPage(
   theme = make_theme(),
-  includeCSS("styles.css"),
   div(id = "header",
       titlePanel("Explore your weather"),
       labeled_input("prev_city_btn", "Return to previous city",
