@@ -44,6 +44,7 @@ make_theme <- function(type = "normal"){
 
 # Let thematic know to use the font from bs_lib
 thematic_on(font = "auto")
+theme_set(theme_bw())
 
 # We have an already build station to city df we are using for lookups
 station_to_city <- read_rds(here("data/station_to_city.rds"))
