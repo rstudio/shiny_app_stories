@@ -237,7 +237,7 @@ server <- function(input, output, session) {
   })
 
   output$todays_weather <- renderUI({
-    req(todays_weather)
+    req(city_data()$has_temp)
     avg_temp <- todays_weather()$avg[1]
 
 
