@@ -21,7 +21,12 @@ make_theme <- function(type = "normal"){
   my_theme <- bs_theme(bootswatch = "flatly",
                        success = "#006837",
                        base_font = font_google("Righteous"),
-                       "font-size-base" = "1.1rem")
+                       "font-size-base" = "1.1rem") %>%
+    # make station bubble cards respect the colors of the theme
+    bs_add_rules(list(
+      ".station_bubble { background: $secondary; }",
+      ".station_bubble > a{ color: $black; }"
+    ))
 
   if(type == "cold"){
     my_theme %>%
