@@ -7,6 +7,8 @@ library(ggtext)
 library(glue)
 
 source('helpers.R')
+options(shiny.autoreload = TRUE)
+shiny::devmode(TRUE)
 
 # These control how the app looks when the daily temperature above, within, or
 # below the comfortable temperature threshold
@@ -27,15 +29,15 @@ make_theme <- function(type = "normal"){
   if(type == "cold"){
     my_theme %>%
       bs_theme_update(
-        bg = "white",
-        fg = cold_color,
+        bg = cold_color,
+        fg = "white",
         primary = "#00c1ff",
         secondary = "#7fedf0")
   } else if(type == "hot") {
     my_theme %>%
       bs_theme_update(
-        bg = "white",
-        fg = hot_color,
+        fg = "white",
+        bg = hot_color,
         primary = "#f03b20",
         secondary = "#fecc5c")
   } else {
@@ -222,7 +224,7 @@ server <- function(input, output, session) {
               panel.grid.minor = element_line(color = "grey85", size = 0.2))
     })
   }) %>%
-    bindCache(input$city, session$clientData$output_weather_plot_fg, sizePolicy = sizeGrowthRatio(width = 400, height = 600))
+    bindCache(input$city, getCurrentOutputInfo()$fg(), sizePolicy = sizeGrowthRatio(width = 400, height = 600))
     # We keep track of the color of the plot foreground in the cache key or
     # otherwise the plot wont know it needs to update
 

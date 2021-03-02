@@ -101,7 +101,6 @@ build_prcp_plot <- function(prcp_data){
                   label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3))),
               nudge_y = 0.05,
               hjust = 0.5,
-              color = "black",
               size = 5,
               vjust = 0) +
     labs(title = "Monthly precipitation", y = "") +
@@ -114,6 +113,7 @@ print_deg <- function(degrees, add_F = FALSE){
 }
 
 build_temp_plot <- function(temp_data){
+  label_pad <- 5
 
   extremes <- bind_rows(
     arrange(temp_data, -max, -avg, -min)[1,] %>%
@@ -128,14 +128,15 @@ build_temp_plot <- function(temp_data){
       filter(month(date) == month(Sys.Date()), day(date) == day(Sys.Date())) %>%
       mutate(label = glue("Avg for {format(date, '%B %d')}: {print_deg(avg)}"),
              pos = avg)
-  )
+  ) %>%
+    mutate(label_pos = ifelse(pos == min, max + label_pad, min - label_pad) )
 
   context_points <- tibble(
-    label = c("107&#176;: hottest day in Pheonix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
-    temp = c(107, -14.9)
+    label = c("105&#176;: hottest day in Phoenix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
+    temp = c(105, -14.9)
   )
 
-  axis_breaks <- seq(100, -10, by = -10)
+  axis_breaks <- seq(110, -10, by = -10)
   axis_labels <- as.character(axis_breaks)
   axis_labels[1] <- print_deg(axis_labels[1], add_F=TRUE)
   ggplot(temp_data, aes(x = date, y = avg)) +
@@ -146,17 +147,19 @@ build_temp_plot <- function(temp_data){
                   label.padding = grid::unit(rep(0, 4), "pt")) +
     geom_hline(data = context_points, aes(yintercept = temp)) +
     geom_ribbon(aes(ymin = min, ymax = max),
-                fill = "steelblue",
-                alpha = 0.25) +
+                alpha = 0.4) +
     geom_line(color = "white") +
     geom_point(data = extremes, aes(y = pos)) +
     geom_richtext(data = extremes,
-                  aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-                  vjust = c(1,1,0),
-                  nudge_y = c(-1,-1,1),
+                  aes(y = label_pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+                  vjust = c(1,0,1),
+                  # nudge_y = c(1,-1,1),
                   label.color = NA,
+                  color = "black",
                   # Gives us a transparent background so text pops better
                   fill = after_scale(alpha("white", .5))) +
+    geom_segment(data = extremes,
+                  aes(xend = date, y = pos, yend = label_pos)) +
     labs(title = "Daily temperature", y = "") +
     scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
 }
