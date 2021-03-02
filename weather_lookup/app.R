@@ -18,7 +18,7 @@ cold_color <- "#045a8d"
 # the standard bootswatch theme
 make_theme <- function(type = "normal"){
 
-  my_theme <- bs_theme(bootswatch = "flatly",
+  my_theme <- bs_theme(bootswatch = "cerulean",
                        success = "#006837",
                        base_font = font_google("Righteous"),
                        "font-size-base" = "1.1rem") %>%
