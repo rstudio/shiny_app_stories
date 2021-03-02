@@ -11,7 +11,7 @@ source('helpers.R')
 # These control how the app looks when the daily temperature above, within, or
 # below the comfortable temperature threshold
 hot_color <- "#bd0026"
-cold_color <- "#0061f2"
+cold_color <- "#045a8d"
 
 # Setup a bslib theme based on the temperature type. "Hot" colors our app
 # red/orange, cold gives us a blue app and "normal" doesn't touch the colors of
@@ -19,7 +19,7 @@ cold_color <- "#0061f2"
 make_theme <- function(type = "normal"){
 
   my_theme <- bs_theme(bootswatch = "flatly",
-                       success = "#0C8C37",
+                       success = "#006837",
                        base_font = font_google("Righteous"),
                        "font-size-base" = "1.1rem")
 
@@ -60,12 +60,12 @@ ui <- fluidPage(
   includeCSS("styles.css"),
   div(id = "header",
       titlePanel("Explore your weather"),
+      labeled_input("prev_city_btn", "Return to previous city",
+                    actionButton('prev_city', textOutput('prev_city_label'))),
       labeled_input('city-selector', "Search for a city",
                     selectizeInput('city', label = NULL,
                                    choices = c("", unique_cities),
                                    multiple = FALSE)),
-      labeled_input("prev_city_btn", "Return to previous city",
-                    actionButton('prev_city', textOutput('prev_city_label'))),
       labeled_input("rnd_city_btn", "Try a random city",
                     actionButton('rnd_city', icon('dice'))),
       uiOutput('todays_weather'),
