@@ -109,7 +109,7 @@ build_prcp_plot <- function(prcp_data){
 }
 
 print_deg <- function(degrees, add_F = FALSE){
-  paste0(round(as.numeric(degrees),2), "&#176;", if(add_F) " F" else "")
+  paste0(round(as.numeric(degrees),1), "&#176;", if(add_F) " F" else "")
 }
 
 build_temp_plot <- function(temp_data){
