@@ -1,26 +1,27 @@
-body {
-  font-weight: 300;
-}
+/* Dont let the page get awkwardly wide on big screens */
 body > div {
   max-width: 1200px;
 }
 
+/* Give every first-child a nice padding and border to deliniate */
 .container-fluid > * {
   padding: 1.4rem;
   border-bottom: 1px solid #9797972e;
 }
 
+/* Dont put the lower border at the end of the page or in the source-code link */
 .container-fluid > *:last-child,
-#source_link,
-#settings_panel.hidden {
+#source_link {
   border-bottom: none;
 }
 
+/* Text inputs bottom margin prevents it from lining up nicely, so remove */
 .form-group.shiny-input-container,
 .selectize-control {
   margin-bottom: 0;
 }
 
+/* Top of page is a small grid of controls and info*/
 #header {
   display: grid;
   justify-items: center;
@@ -47,20 +48,22 @@ body > div {
   }
 }
 
-
 #contributing_stations {
   padding-bottom: 1rem;
 }
 
+/* The section header */
 #contributing_stations span:nth-child(1){
   font-size: 1.2em;
 }
 
+/* Supplementary text is italic and smaller*/
 #contributing_stations span:nth-child(2){
   font-size: 0.9em;
   font-style: italic;
 }
 
+/* Main section is flex layout so city with lots of stations wrap nicely*/
 #station_info {
   display: flex;
   flex-wrap: wrap;
@@ -78,12 +81,7 @@ body > div {
 .station_bubble > a,
 .action-button { color: $white; }
 
-
-#data_info {
-  font-size: small;
-}
-
-
+/* Buttons are set at a fixed width and if content is too big it gets elipsed*/
 button { width: 200px; }
 button > div {
   text-overflow: ellipsis;
@@ -101,6 +99,7 @@ button > div {
   padding: 0;
 }
 
+/* Use grid to make thresholds two columns unless it's a small screen  */
 #control_thresholds {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
@@ -108,18 +107,6 @@ button > div {
   justify-content: center;
   justify-items: center;
   align-items: center;
-}
-
-#control_thresholds > div {
-  font-size: 0.85rem;
-}
-
-span.cold {
-  color: blue;
-}
-
-span.hot {
-  color: blue;
 }
 
 #hide_settings {
@@ -130,8 +117,13 @@ span.hot {
 }
 #settings_panel {
   padding-top: 5px;
-  padding-bottom: 0;
+  padding-bottom: 1rem;
 }
 
+
+/* Make some wordy sections smaller */
+.small_text {
+  font-size: small;
+}
 
 
