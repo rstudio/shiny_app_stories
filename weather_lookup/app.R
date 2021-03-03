@@ -5,6 +5,7 @@ library(thematic)
 library(patchwork)
 library(ggtext)
 library(glue)
+library(fontawesome)
 
 source('helpers.R')
 options(shiny.autoreload = TRUE)
@@ -20,9 +21,9 @@ cold_color <- "#045a8d"
 # the standard bootswatch theme
 make_theme <- function(type = "normal"){
 
-  my_theme <- bs_theme(bootswatch = "cerulean",
-                       success = "#006837",
-                       base_font = font_google("Righteous"),
+  my_theme <- bs_theme(bootswatch = "flatly",
+                       # success = "#006837",
+                       # base_font = font_google("Righteous"),
                        "font-size-base" = "1.1rem") %>%
     bs_add_rules(sass::sass_file("styles.scss"))
 
@@ -61,6 +62,7 @@ get_random_city <- function(){ sample(unique_cities, 1) }
 
 ui <- fluidPage(
   theme = make_theme(),
+  includeScript("settings_toggle.js"),
   div(id = "header",
       titlePanel("Explore your weather"),
       labeled_input("prev_city_btn", "Return to previous city",
@@ -73,17 +75,20 @@ ui <- fluidPage(
                     actionButton('rnd_city', icon('dice'))),
       uiOutput('todays_weather'),
   ),
+  div(id = "settings_panel", class = "hidden",
+    tags$button(id = "open_settings", class = "btn", fa("cog"), "Set comfort range"),
+    div(id = "control_thresholds",
+      div("The theme of this app updates based on the current city's average temperature for the current day.",
+          "By default if the temperature is below the the comfortable range the app becomes", span(style = glue("background:{cold_color};color:white;"), "blue and \"icy\""),
+          "and if it's above it becomes", span(style = glue("background:{hot_color};color:white;"), "red and \"firey\"."), "You can adjust these thresholds here."),
+        sliderInput("temp_thresholds", "Set comfortable temperature range", min = 0, max = 100, value = c(30, 80), post = " deg", width = "100%"),
+    ),
+  ),
   plotOutput("weather_plot", height = 850),
   div(id = "contributing_stations",
       span("Stations contributing data"),
       span("Click on station to go to its dataset."),
       uiOutput('station_info') ),
-  div(id = "control_thresholds",
-    div("The theme of this app updates based on the current city's average temperature for the current day.",
-        "By default if the temperature is below the the comfortable range the app becomes", span(style = glue("color:{cold_color}"), "blue and \"icy\""),
-        "and if it's above it becomes", span(style = glue("color:{hot_color}"), "red and \"firey\"."), "You can adjust these thresholds here."),
-      sliderInput("temp_thresholds", "Set comfortable temperature range", min = 0, max = 100, value = c(30, 80), post = " deg", width = "100%"),
-  ),
   div(id = "data_info",
       icon("database"), "Data sourced from",
       a(href = "https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/climate-normals", "NOAA Climate Normals"),
@@ -212,7 +217,7 @@ server <- function(input, output, session) {
 
       p +
         plot_layout(heights = c(2, 1)) +
-        plot_annotation(title = glue('Weather normals over the year for {input$city}'),
+        plot_annotation(title = glue('Weather normals for {input$city}'),
                         caption = glue("See more at connect.rstudioservices.com/explore_your_weather/{make_url_hash(input$city)}"),
                         theme = theme(plot.title = element_text(size = 30, hjust = 0.5))) &
         scale_x_date(name = "", date_labels = "%b", breaks = twelve_month_seq,

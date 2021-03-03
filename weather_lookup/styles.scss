@@ -1,16 +1,19 @@
-
+body {
+  font-weight: 300;
+}
 body > div {
   max-width: 1200px;
 }
 
 .container-fluid > * {
   padding: 1.4rem;
-  border-top: 1px solid #9797972e;
+  border-bottom: 1px solid #9797972e;
 }
 
-.container-fluid > *:nth-child(1),
-#source_link {
-  border-top: none;
+.container-fluid > *:last-child,
+#source_link,
+#settings_panel.hidden {
+  border-bottom: none;
 }
 
 .form-group.shiny-input-container,
@@ -65,14 +68,15 @@ body > div {
 }
 
 .station_bubble {
-  border:1px solid black;
+  border:1px solid $white;
   border-radius: 9px;
   padding: 5px;
   margin: 5px;
   background: $secondary;
 }
 /* Make station bubble cards respect the colors of the theme */
-.station_bubble > a{ color: $black; }
+.station_bubble > a,
+.action-button { color: $white; }
 
 
 #data_info {
@@ -117,3 +121,18 @@ span.cold {
 span.hot {
   color: blue;
 }
+
+#settings_panel button {
+  font-size: 0.85rem;
+  border: 1px solid;
+}
+#settings_panel {
+  padding-top: 5px;
+  padding-bottom: 0;
+}
+#settings_panel.hidden > div{
+  height: 0;
+  overflow: hidden;
+}
+
+
