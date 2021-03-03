@@ -122,17 +122,16 @@ span.hot {
   color: blue;
 }
 
-#settings_panel button {
+#hide_settings {
   font-size: 0.85rem;
+  padding: 5px 10px;
   border: 1px solid;
+  margin-top: 4px;
 }
 #settings_panel {
   padding-top: 5px;
   padding-bottom: 0;
 }
-#settings_panel.hidden > div{
-  height: 0;
-  overflow: hidden;
-}
+
 
 

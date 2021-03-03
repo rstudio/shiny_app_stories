@@ -62,7 +62,6 @@ get_random_city <- function(){ sample(unique_cities, 1) }
 
 ui <- fluidPage(
   theme = make_theme(),
-  includeScript("settings_toggle.js"),
   div(id = "header",
       titlePanel("Explore your weather"),
       labeled_input("prev_city_btn", "Return to previous city",
@@ -75,8 +74,8 @@ ui <- fluidPage(
                     actionButton('rnd_city', icon('dice'))),
       uiOutput('todays_weather'),
   ),
-  div(id = "settings_panel", class = "hidden",
-    tags$button(id = "open_settings", class = "btn", fa("cog"), "Set comfort range"),
+  tags$a(fa("cog"), "Set comfort range", id = "hide_settings", class = "btn", `data-toggle` = "collapse", href="#settings_panel", role = 'button'),
+  div(id = "settings_panel",class = "collapse",
     div(id = "control_thresholds",
       div("The theme of this app updates based on the current city's average temperature for the current day.",
           "By default if the temperature is below the the comfortable range the app becomes", span(style = glue("background:{cold_color};color:white;"), "blue and \"icy\""),
