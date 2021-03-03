@@ -113,7 +113,7 @@ print_deg <- function(degrees, add_F = FALSE){
 }
 
 build_temp_plot <- function(temp_data){
-  label_pad <- 5
+  label_pad <- 8
 
   extremes <- bind_rows(
     arrange(temp_data, -max, -avg, -min)[1,] %>%
@@ -153,7 +153,7 @@ build_temp_plot <- function(temp_data){
     geom_richtext(data = extremes,
                   aes(y = label_pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
                   vjust = c(1,0,1),
-                  # nudge_y = c(1,-1,1),
+                  nudge_y = c(3,-3,3),
                   label.color = NA,
                   color = "black",
                   # Gives us a transparent background so text pops better
