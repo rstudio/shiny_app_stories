@@ -89,37 +89,31 @@ button > div {
   white-space: nowrap;
 }
 
+#page-top {
+  height: auto;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0;
+  padding-top: 6PX;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+#current_theme {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  grid-gap: 1rem;
+  padding: 0 0.5rem;
+}
+
 /* Places the source link in upper right of page */
 #source_link {
-  position: fixed;
-  top: 5px;
-  right: 5px;
   font-size: 0.9rem;
   font-weight: lighter;
-  padding: 0;
+  padding: 0 0.5rem;
 }
-
-/* Use grid to make thresholds two columns unless it's a small screen  */
-#control_thresholds {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
-  grid-gap: 2rem;
-  justify-content: center;
-  justify-items: center;
-  align-items: center;
-}
-
-#hide_settings {
-  font-size: 0.85rem;
-  padding: 5px 10px;
-  border: 1px solid;
-  margin-top: 4px;
-}
-#settings_panel {
-  padding-top: 5px;
-  padding-bottom: 1rem;
-}
-
 
 /* Make some wordy sections smaller */
 .small_text {

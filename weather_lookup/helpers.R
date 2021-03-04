@@ -7,6 +7,8 @@ library(stringr)
 library(readr)
 library(here)
 
+# Convert a date to month-day: e.g. Jan 03
+get_md <- function(date = Sys.Date()) format(date, '%B %d')
 
 check_for_data <- function(station_text, data_id){
   # If we're missing the data field dont bother trying to find it
@@ -117,16 +119,16 @@ build_temp_plot <- function(temp_data){
 
   extremes <- bind_rows(
     arrange(temp_data, -max, -avg, -min)[1,] %>%
-      mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
+      mutate(label = glue("Hottest day: {get_md(date)}<br>",
                           "Avg max: {print_deg(max)}"),
              pos = max),
     arrange(temp_data, min, avg, max)[1,] %>%
-      mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
+      mutate(label = glue("Coldest day: {get_md(date)}<br>",
                           "Avg min: {print_deg(min)}"),
              pos = min),
     temp_data %>%
-      filter(month(date) == month(Sys.Date()), day(date) == day(Sys.Date())) %>%
-      mutate(label = glue("Avg for {format(date, '%B %d')}: {print_deg(avg)}"),
+      filter(get_md(date) == get_md()) %>%
+      mutate(label = glue("Avg for {get_md()} {print_deg(avg)}"),
              pos = avg)
   ) %>%
     mutate(label_pos = ifelse(pos == min, max + label_pad, min - label_pad) )
