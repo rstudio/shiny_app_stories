@@ -5,3 +5,5 @@ README.html
 .Rproj.user
 
 weather_lookup/tests/mytest-current/
+
+weather_lookup/rsconnect/
