@@ -12,13 +12,14 @@ options(shiny.autoreload = TRUE)
 shiny::devmode(TRUE)
 
 # Setup a bslib theme based on the light or dark mode preference
-make_theme <- function(type = "light"){
-  bs_theme(bootswatch = if(type == "light") "flatly" else "darkly") %>%
+make_theme <- function(type = "Light"){
+  bs_theme(bootswatch = if(type == "Light") "flatly" else "darkly",
+           base_font = font_google("Alegreya") ) %>%
     bs_add_rules(sass::sass_file("styles.scss"))
 }
 
 # Let thematic know to use the font from bs_lib
-thematic_on(font = "auto")
+thematic_shiny(font = "auto")
 theme_set(theme_bw())
 
 # We have an already build station to city df we are using for lookups
@@ -33,8 +34,7 @@ get_random_city <- function(){ sample(unique_cities, 1) }
 ui <- fluidPage(
   theme = make_theme(),
   div(id = "page-top",
-      radioButtons("current_theme", "App Theme:",
-                   c("Light" = "light", "Dark" = "dark"), inline = TRUE),
+      radioButtons("current_theme", "App Theme:", c("Light", "Dark"), inline = TRUE),
       div(id = "source_link", a(href = "https://github.com/rstudio/shiny_app_stories/blob/master/weather_lookup/", "View source code on github", icon("github"))),
   ),
   div(id = "header",
