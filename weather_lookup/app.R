@@ -6,6 +6,7 @@ library(patchwork)
 library(ggtext)
 library(glue)
 
+
 source('helpers.R')
 options(shiny.autoreload = TRUE)
 shiny::devmode(TRUE)
@@ -15,7 +16,7 @@ my_theme <- bs_theme(bootswatch = "cerulean",
   bs_add_rules(sass::sass_file("styles.scss"))
 
 # Let thematic know to use the font from bs_lib
-thematic_on(font = "auto")
+thematic_shiny(font = "auto")
 
 # We have an already build station to city df we are using for lookups
 station_to_city <- read_rds(here("data/station_to_city.rds"))
