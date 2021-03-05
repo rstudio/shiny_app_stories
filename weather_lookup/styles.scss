@@ -60,15 +60,16 @@ body > div {
 }
 
 .station_bubble {
-  border:1px solid $black;
   border-radius: 9px;
   padding: 5px;
   margin: 5px;
+  border: 1px solid $white;
   background: $secondary;
 }
 
 /* Make station bubble cards respect the colors of the theme */
 .station_bubble > a {@extend .bg-secondary;}
+
 
 /* Buttons are set at a fixed width and if content is too big it gets elipsed*/
 button { width: 200px; }
