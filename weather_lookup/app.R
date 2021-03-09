@@ -187,6 +187,8 @@ server <- function(input, output, session) {
         theme(text = element_text(size = 18),
               axis.text.x = element_text(hjust = 0),
               axis.text.y = element_markdown(),
+              # Make background grid lines a bit more prominent to make precise
+              # reading of chart easier
               panel.grid.major = element_line(color = "grey70", size = 0.2),
               panel.grid.minor = element_line(color = "grey85", size = 0.2))
     })
