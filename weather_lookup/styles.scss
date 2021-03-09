@@ -63,7 +63,7 @@ body > div {
   border-radius: 9px;
   padding: 5px;
   margin: 5px;
-  border: 1px solid $white;
+  border: $border-width solid $border-color;
   background: $secondary;
 }
 
