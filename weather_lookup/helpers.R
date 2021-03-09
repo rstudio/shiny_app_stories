@@ -160,6 +160,14 @@ labeled_input <- function(id, label, input){
       input)
 }
 
+# Text grob with color matching current theme
+themed_text <- function(text){
+  grid::textGrob(
+    text,
+    gp = grid::gpar(col = thematic::thematic_get_option("fg"))
+  )
+}
+
 
 # Map a function that may fail and simply remove the failures before returning
 # This helps because we have lots of things that may fail such as http requests

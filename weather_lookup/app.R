@@ -15,6 +15,7 @@ my_theme <- bs_theme(bootswatch = "cerulean",
                      base_font = font_google("Righteous")) %>%
   bs_add_rules(sass::sass_file("styles.scss"))
 
+
 # Let thematic know to use the font from bs_lib
 thematic_shiny(font = "auto")
 
@@ -158,14 +159,14 @@ server <- function(input, output, session) {
       temp_plot <- if(city_data()$has_temp) {
         build_temp_plot(city_data()$temperature)
       } else {
-        grid::textGrob(glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
+        themed_text(glue("Sorry, no temperature data is available for {input$city}, try a nearby city."))
       }
 
       incProgress(2, detail = "Building precipitation plot")
       prcp_plot <- if(city_data()$has_prcp) {
         build_prcp_plot(city_data()$precipitation)
       } else {
-        grid::textGrob(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
+        themed_text(glue("Sorry, no precipitation data is available for {input$city}, try a nearby city."))
       }
 
       # Setup layout such that temperature data is top large plot unless it is missing when precipitation is the top plot
