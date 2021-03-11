@@ -1,0 +1,14 @@
+name: weather_lookup_preview
+title: weather_lookup_preview
+username: nick_strayer
+account: nick_strayer
+server: connect.rstudioservices.com
+hostUrl: https://connect.rstudioservices.com/__api__
+appId: 1766
+bundleId: 60460
+url: https://connect.rstudioservices.com/content/1766/
+when: 1614697730.47158
+lastSyncTime: 1614697730.47159
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: data/gather_station_info.R|data/grab_data_scratch.R|tests/mytest-current/001.json|tests/mytest-current/001.png|tests/mytest-current/002.json|tests/mytest-current/002.png|tests/mytest.R

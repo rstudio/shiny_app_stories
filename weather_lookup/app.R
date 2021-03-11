@@ -6,10 +6,8 @@ library(patchwork)
 library(ggtext)
 library(glue)
 
-
 source('helpers.R')
-options(shiny.autoreload = TRUE)
-shiny::devmode(TRUE)
+
 # Builds theme object to be supplied to ui
 my_theme <- bs_theme(bootswatch = "cerulean",
                      base_font = font_google("Righteous")) %>%
