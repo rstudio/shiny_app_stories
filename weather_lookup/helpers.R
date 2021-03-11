@@ -101,7 +101,6 @@ build_prcp_plot <- function(prcp_data){
                   label = ifelse(avg_precipitation == 0, "> 0", format(avg_precipitation, digits = 3))),
               nudge_y = 0.05,
               hjust = 0.5,
-              color = "black",
               size = 5,
               vjust = 0) +
     labs(title = "Monthly precipitation", y = "") +
@@ -159,6 +158,14 @@ labeled_input <- function(id, label, input){
       style = "display: grid; justify-items: center;",
       span(label, style = "font-size: small;"),
       input)
+}
+
+# Text grob with color matching current theme
+themed_text <- function(text){
+  grid::textGrob(
+    text,
+    gp = grid::gpar(col = thematic::thematic_get_option("fg"))
+  )
 }
 
 
