@@ -9,8 +9,10 @@ library(glue)
 source('helpers.R')
 
 # Builds theme object to be supplied to ui
-my_theme <- bs_theme(bootswatch = "cerulean",
-                     base_font = font_google("Righteous")) %>%
+my_theme <- bs_theme(
+  bootswatch = "cerulean",
+  base_font = font_google("Righteous")
+) %>%
   bs_add_rules(sass::sass_file("styles.scss"))
 
 
@@ -19,6 +21,10 @@ thematic_shiny(font = "auto")
 
 # We have an already build station to city df we are using for lookups
 station_to_city <- read_rds(here("data/station_to_city.rds"))
+
+# Load all the weather normals data to be filtered by city
+temperature_data <- arrow::read_feather("data/temperature_data.feather")
+precipitation_data <- arrow::read_feather("data/precipitation_data.feather")
 
 # Some cities have multiple stations but we only want users to see unique cities
 unique_cities <- unique(station_to_city$city)
@@ -96,30 +102,50 @@ server <- function(input, output, session) {
 
     withProgress(message = 'Fetching data from NOAA', {
       incProgress(0, detail = "Gathering all stations within city")
-      stations <- filter(station_to_city, city == input$city)
+      station_indices <- which(station_to_city$city == input$city)
+      stations <- station_to_city[station_indices, ] %>%
+        mutate(url = build_station_url(station))
+
 
       # Not every station has both temperature and precipitation data. To deal
       # with this, loop through all stations in a city try to extract whatever
       # data is present. If a city has a lot of stations, like Fairbanks, AK,
       # this this can take a while
       incProgress(1/4, detail = "Downloading data from all found stations")
-      stations <- stations %>%
-        mutate(url = build_station_url(station),
-               data = safe_map(url, readr::read_file))
 
       # If we have multiple stations with data we just collapse it to the mean
       collapse_stations <- . %>%
-        reduce(bind_rows, .init = tibble(date = Date())) %>%
         group_by(date) %>%
-        summarise_all(mean)
+        summarise_all(mean) %>%
+        ungroup()
 
       incProgress(2/4, detail = "Extracting temperature data")
-      stations$temp_res <- safe_map(stations$data, get_temp_data)
-      temperature <- collapse_stations(stations$temp_res)
+      temperature_all <- temperature_data %>%
+        filter(station_index %in% station_indices) %>%
+        mutate(
+          date = lubridate::mdy(paste(month, day, "2000", sep = "-"), quiet = TRUE)
+        )
+
+      stations_with_temp <- unique(temperature_all$station_index)
+
+      temperature <- temperature_all %>%
+        select(-month, -day, -station_index) %>%
+        collapse_stations()
+
 
       incProgress(3/4, detail = "Extracting precipitation data")
-      stations$prcp_res <- safe_map(stations$data, get_prcp_data)
-      precipitation <- collapse_stations(stations$prcp_res)
+      precipitation_all <- precipitation_data %>%
+        filter(station_index %in% station_indices) %>%
+        mutate(
+          date = lubridate::mdy(paste(month, "1", "2000", sep = "-"), quiet = TRUE)
+        ) %>%
+        rename(avg_precipitation = avg)
+      stations_with_precip <- unique(precipitation_all$station_index)
+
+      precipitation <- precipitation_all %>%
+        select(-month, -station_index) %>%
+        collapse_stations()
+
 
       incProgress(1, detail = "Packaging data for app")
       list(temperature = temperature,
@@ -127,9 +153,10 @@ server <- function(input, output, session) {
            has_temp = nrow(temperature) != 0,
            has_prcp = nrow(precipitation) != 0,
            station_info = stations %>%
-             mutate(had_temp = !map_lgl(temp_res, is.null),
-                    had_prcp = !map_lgl(prcp_res, is.null)) %>%
-             select(-data, -temp_res, -prcp_res))
+             mutate(had_temp = station_indices %in% stations_with_temp,
+                    had_prcp = station_indices %in% stations_with_precip)
+
+      )
     })
   }) %>%
     # Our results will always be the same for a given city, so cache on that key
@@ -174,7 +201,7 @@ server <- function(input, output, session) {
       } else {
         prcp_plot / temp_plot
       }
-
+    message("Generating plot with no cache")
       p +
         plot_layout(heights = c(2, 1)) +
         plot_annotation(title = glue('Weather normals over the year for {input$city}'),
