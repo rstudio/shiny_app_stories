@@ -10,4 +10,3 @@ weather_lookup/rsconnect/
 
 weather_lookup/data/scrape_data/scraped_data/
 
-*.feather
