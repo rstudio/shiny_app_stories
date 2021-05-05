@@ -1,3 +1,10 @@
+/*
+* Prefixed by https://autoprefixer.github.io
+* PostCSS: v7.0.29,
+* Autoprefixer: v9.7.6
+* Browsers: last 4 version
+*/
+
 /* Dont let the page get awkwardly wide on big screens */
 body > div {
   max-width: 1200px;
@@ -12,12 +19,41 @@ body > div {
 
 /* Top of page is a small grid of controls and info*/
 #header {
+  display: -ms-grid;
   display: grid;
   justify-items: center;
+  -ms-grid-columns: 1fr 0.5rem 1fr 0.5rem 1fr;
   grid-template-columns: repeat(3, 1fr);
+  -ms-grid-rows: auto 0.5rem auto;
   grid-template-rows: repeat(2, auto);
   grid-gap: 0.5rem;
-  align-items: flex-start;
+  -webkit-box-align: start;
+      -ms-flex-align: start;
+          align-items: flex-start;
+}
+#header > *:nth-child(1) {
+  -ms-grid-row: 1;
+  -ms-grid-column: 1;
+}
+#header > *:nth-child(2) {
+  -ms-grid-row: 1;
+  -ms-grid-column: 3;
+}
+#header > *:nth-child(3) {
+  -ms-grid-row: 1;
+  -ms-grid-column: 5;
+}
+#header > *:nth-child(4) {
+  -ms-grid-row: 3;
+  -ms-grid-column: 1;
+}
+#header > *:nth-child(5) {
+  -ms-grid-row: 3;
+  -ms-grid-column: 3;
+}
+#header > *:nth-child(6) {
+  -ms-grid-row: 3;
+  -ms-grid-column: 5;
 }
 
 /* Make header and todays weather take up whole width */
@@ -32,8 +68,22 @@ body > div {
 @media only screen and (max-width: 768px) {
   /* For small screens stack buttons and search */
   #header {
+    -ms-grid-columns: 1fr;
     grid-template-columns: 1fr;
+    -ms-grid-rows: auto 0.5rem auto 0.5rem auto;
     grid-template-rows: repeat(3, auto);
+  }
+  #header > *:nth-child(1) {
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+  }
+  #header > *:nth-child(2) {
+    -ms-grid-row: 3;
+    -ms-grid-column: 1;
+  }
+  #header > *:nth-child(3) {
+    -ms-grid-row: 5;
+    -ms-grid-column: 1;
   }
 }
 
@@ -54,9 +104,14 @@ body > div {
 
 /* Main section is flex layout so city with lots of stations wrap nicely*/
 #station_info {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 
 .station_bubble {
@@ -74,7 +129,8 @@ body > div {
 /* Buttons are set at a fixed width and if content is too big it gets elipsed*/
 button { width: 200px; }
 button > div {
-  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+     text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -86,13 +142,20 @@ button > div {
   padding: 0;
   padding-top: 6PX;
   position: relative;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
 }
 
 #current_theme {
+  display: -ms-grid;
   display: grid;
+  -ms-grid-columns: auto 1rem auto;
   grid-template-columns: repeat(2, auto);
   grid-gap: 1rem;
   padding: 0 0.5rem;
