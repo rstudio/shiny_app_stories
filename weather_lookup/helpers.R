@@ -92,7 +92,6 @@ build_temp_plot <- function(temp_data){
 # Add a nicely styled and centered label above a given input
 labeled_input <- function(id, label, input){
   div(id = id,
-      style = "display: grid; justify-items: center;",
       span(label, style = "font-size: small;"),
       input)
 }

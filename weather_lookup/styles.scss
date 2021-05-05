@@ -1,15 +1,7 @@
-/*
-* Prefixed by https://autoprefixer.github.io
-* PostCSS: v7.0.29,
-* Autoprefixer: v9.7.6
-* Browsers: last 4 version
-*/
-
 /* Dont let the page get awkwardly wide on big screens */
 body > div {
   max-width: 1200px;
 }
-
 
 /* Text inputs bottom margin prevents it from lining up nicely, so remove */
 .form-group.shiny-input-container,
@@ -17,74 +9,46 @@ body > div {
   margin-bottom: 0;
 }
 
+/* Make title nice and centered */
+#app-title > h2 { text-align: center; }
+
 /* Top of page is a small grid of controls and info*/
 #header {
-  display: -ms-grid;
-  display: grid;
-  justify-items: center;
-  -ms-grid-columns: 1fr 0.5rem 1fr 0.5rem 1fr;
-  grid-template-columns: repeat(3, 1fr);
-  -ms-grid-rows: auto 0.5rem auto;
-  grid-template-rows: repeat(2, auto);
-  grid-gap: 0.5rem;
-  -webkit-box-align: start;
-      -ms-flex-align: start;
-          align-items: flex-start;
-}
-#header > *:nth-child(1) {
-  -ms-grid-row: 1;
-  -ms-grid-column: 1;
-}
-#header > *:nth-child(2) {
-  -ms-grid-row: 1;
-  -ms-grid-column: 3;
-}
-#header > *:nth-child(3) {
-  -ms-grid-row: 1;
-  -ms-grid-column: 5;
-}
-#header > *:nth-child(4) {
-  -ms-grid-row: 3;
-  -ms-grid-column: 1;
-}
-#header > *:nth-child(5) {
-  -ms-grid-row: 3;
-  -ms-grid-column: 3;
-}
-#header > *:nth-child(6) {
-  -ms-grid-row: 3;
-  -ms-grid-column: 5;
+  margin: 1rem auto;
+  width: 768px;
 }
 
-/* Make header and todays weather take up whole width */
-#header > h2   {
-  grid-column: 1 / -1;
-  margin-top: 0;
-}
-#todays_weather {
-  grid-column: 1 / -1;
+#header > div {
+  display: inline-block;
 }
 
-@media only screen and (max-width: 768px) {
-  /* For small screens stack buttons and search */
-  #header {
-    -ms-grid-columns: 1fr;
-    grid-template-columns: 1fr;
-    -ms-grid-rows: auto 0.5rem auto 0.5rem auto;
-    grid-template-rows: repeat(3, auto);
+#city-selector {
+  margin: 0 15px;
+}
+
+#header > * > span {
+  display: block;
+  text-align: center;
+}
+
+@media all and (max-width: 768px) {
+   /* For small screens, stack buttons and search into single column */
+  #header { width: 100%; }
+
+  #header > div {
+    display: block;
+    margin: 0.5rem 0;
   }
-  #header > *:nth-child(1) {
-    -ms-grid-row: 1;
-    -ms-grid-column: 1;
+
+  #header > * > button,
+  .form-group.shiny-input-container {
+    display: block;
+    margin: 0 auto;
   }
-  #header > *:nth-child(2) {
-    -ms-grid-row: 3;
-    -ms-grid-column: 1;
-  }
-  #header > *:nth-child(3) {
-    -ms-grid-row: 5;
-    -ms-grid-column: 1;
-  }
+
+
+  /* Hide source link at top of page to avoid overlapping theme picker */
+  #page-top > .source_link { display: none;}
 }
 
 #contributing_stations {
@@ -142,31 +106,32 @@ button > div {
   padding: 0;
   padding-top: 6PX;
   position: relative;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
-  -ms-flex-wrap: wrap;
-      flex-wrap: wrap;
+}
+
+#page-top > * {
+  position: absolute;
+}
+
+.source_link {
+  font-size: 0.9rem;
+  font-weight: lighter;
+}
+/* Places the source link in upper right of page */
+#page-top > .source_link {
+  right: 0;
+  padding: 0 0.5rem;
 }
 
 #current_theme {
-  display: -ms-grid;
-  display: grid;
-  -ms-grid-columns: auto 1rem auto;
-  grid-template-columns: repeat(2, auto);
-  grid-gap: 1rem;
   padding: 0 0.5rem;
 }
 
-/* Places the source link in upper right of page */
-#source_link {
-  font-size: 0.9rem;
-  font-weight: lighter;
-  padding: 0 0.5rem;
+#current_theme .shiny-options-group {
+  /* Makes input sit next to the label */
+  display: inline;
 }
+
+
 
 /* Make some wordy sections smaller */
 .small_text {
