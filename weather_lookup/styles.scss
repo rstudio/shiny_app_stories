@@ -3,11 +3,46 @@ body > div {
   max-width: 1200px;
 }
 
-/* Text inputs bottom margin prevents it from lining up nicely, so remove */
-.form-group.shiny-input-container,
-.selectize-control {
-  margin-bottom: 0;
+/* Very top of page spans entire width and has theme changer on the left and
+   a source link on the right */
+#page-top {
+  height: auto;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0;
+  padding-top: 6PX;
+  position: relative;
 }
+
+#page-top > * {
+  position: absolute;
+}
+
+.source_link {
+  font-size: 0.9rem;
+  font-weight: lighter;
+}
+
+/* Theme chooser sits in upper left of page */
+#current_theme {
+  padding: 0 0.5rem;
+}
+
+#current_theme .shiny-options-group {
+  /* Makes input sit next to the label */
+  display: inline;
+}
+
+/* Source link sits in upper right of page */
+#page-top > .source_link {
+  right: 0;
+  padding: 0 0.5rem;
+}
+/* Hide source link on mobile to avoid overlapping theme picker */
+@media all and (max-width: 768px) {
+  #page-top > .source_link { display: none;}
+}
+
 
 /* Make title nice and centered */
 #app-title > h2 { text-align: center; }
@@ -16,16 +51,20 @@ body > div {
 #header {
   margin: 1rem auto;
   width: 768px;
+  display: -ms-flexbox;
+  display: flex; /* helps vertically align stuff */
 }
 
 #header > div {
   display: inline-block;
 }
 
+/* Padding around city selector input to space out inputs evenly */
 #city-selector {
-  margin: 0 15px;
+  margin: 0 34px; /* 300 + 34 + 400 + 34 + 300 = 768 */
 }
 
+/* Makes the label for header inputs sit centered on top */
 #header > * > span {
   display: block;
   text-align: center;
@@ -33,7 +72,11 @@ body > div {
 
 @media all and (max-width: 768px) {
    /* For small screens, stack buttons and search into single column */
-  #header { width: 100%; }
+  #header {
+    width: 100%;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
 
   #header > div {
     display: block;
@@ -45,7 +88,6 @@ body > div {
     display: block;
     margin: 0 auto;
   }
-
 
   /* Hide source link at top of page to avoid overlapping theme picker */
   #page-top > .source_link { display: none;}
@@ -99,38 +141,13 @@ button > div {
   white-space: nowrap;
 }
 
-#page-top {
-  height: auto;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  padding: 0;
-  padding-top: 6PX;
-  position: relative;
-}
 
-#page-top > * {
-  position: absolute;
-}
 
-.source_link {
-  font-size: 0.9rem;
-  font-weight: lighter;
+/* Text inputs bottom margin prevents it from lining up nicely, so remove */
+.form-group.shiny-input-container,
+.selectize-control {
+  margin-bottom: 0;
 }
-/* Places the source link in upper right of page */
-#page-top > .source_link {
-  right: 0;
-  padding: 0 0.5rem;
-}
-
-#current_theme {
-  padding: 0 0.5rem;
-}
-
-#current_theme .shiny-options-group {
-  /* Makes input sit next to the label */
-  display: inline;
-}
-
 
 
 /* Make some wordy sections smaller */
