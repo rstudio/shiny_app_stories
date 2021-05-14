@@ -4,7 +4,6 @@ library(ggplot2)
 library(thematic)
 library(showtext)
 library(patchwork)
-library(ggtext)
 library(glue)
 
 source('helpers.R')
@@ -15,7 +14,6 @@ my_theme <- bs_theme(
   base_font = font_google("Righteous")
 ) %>%
   bs_add_rules(sass::sass_file("styles.scss"))
-
 
 # Let thematic know to use the font from bs_lib
 thematic_shiny(font = "auto")
@@ -214,7 +212,6 @@ server <- function(input, output, session) {
                      minor_breaks = NULL, expand = expansion(mult = c(0, 0))) &
         theme(text = element_text(size = 18),
               axis.text.x = element_text(hjust = 0),
-              axis.text.y = element_markdown(),
               # Make background grid lines a bit more prominent to make precise
               # reading of chart easier
               panel.grid.major = element_line(color = "grey70", size = 0.2),

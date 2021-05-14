@@ -6,7 +6,7 @@ library(lubridate)
 library(stringr)
 library(readr)
 library(here)
-
+library(glue)
 
 # We need this sequence a good bit and it's a bit of a mouthful so let's store
 # it here
@@ -24,11 +24,9 @@ build_prcp_plot <- function(prcp_data){
   axis_labels[1] <- paste(axis_labels[1], "inches")
 
   ggplot(prcp_data, aes(x = date, y = avg_precipitation)) +
-    geom_richtext(data = context_point,
-                  aes(x = mdy("12-25-2000"), label = label, y = avg_precipitation),
-                  hjust = 1, vjust = 0, nudge_y = 0.05, nudge_x = 2,
-                  label.color = NA, fill = NA,
-                  label.padding = grid::unit(rep(0, 4), "pt")) +
+    geom_text(data = context_point,
+              aes(x = mdy("12-25-2000"), label = label, y = avg_precipitation),
+              hjust = 1, vjust = 0, nudge_y = 0.05, nudge_x = 2) +
     geom_hline(data = context_point, aes(yintercept = avg_precipitation)) +
     geom_rect(aes(xmin = date, xmax = date + months(1), ymin = 0, ymax = avg_precipitation),
               fill = "steelblue",
@@ -45,48 +43,60 @@ build_prcp_plot <- function(prcp_data){
                        expand = expansion(mult = c(0, 0.075)))
 }
 
-build_temp_plot <- function(temp_data){
+build_temp_plot <- function(temp_data) {
 
-    extremes <- bind_rows(
-      arrange(temp_data, -max, -avg, -min)[1,] %>%
-        mutate(label = glue("Hottest day: {format(date, '%B %d')}<br>",
-                            "Avg max temp = {format(max, digits = 3)}&#176;"),
-               pos = max),
-      arrange(temp_data, min, avg, max)[1,] %>%
-        mutate(label = glue("Coldest day: {format(date, '%B %d')}<br>",
-                            "Avg min temp = {format(min, digits = 3)}&#176;"),
-               pos = min)
-    )
+  degrees <- "\u00b0" #Unicode degree symbol
 
-    context_points <- tibble(
-      label = c("107&#176;: hottest day in Pheonix, AZ", "-14.9&#176;: coldest day in Fairbanks, AK"),
-      temp = c(107, -14.9)
-    )
+  extremes <- bind_rows(
+    arrange(temp_data, -max, -avg, -min)[1, ] %>%
+      mutate(
+        label = glue("Hottest day: {format(date, '%B %d')}",
+          "Avg max temp = {format(max, digits = 3)}{degrees}",
+          .sep = "\n"
+        ),
+        pos = max
+      ),
+    arrange(temp_data, min, avg, max)[1, ] %>%
+      mutate(
+        label = glue("Coldest day: {format(date, '%B %d')}",
+          "Avg min temp = {format(min, digits = 3)}{degrees}",
+          .sep = "\n"
+        ),
+        pos = min
+      )
+  )
 
-    axis_breaks <- seq(100, -10, by = -10)
-    axis_labels <- as.character(axis_breaks)
-    axis_labels[1] <- paste0(axis_labels[1], "&#176; F")
-    ggplot(temp_data, aes(x = date, y = avg)) +
-      geom_richtext(data = context_points,
-                    aes(x = mdy("12-25-2000"), label = label, y = temp),
-                    hjust = 1, vjust = c(0,1), nudge_y = c(1,-1), nudge_x = 2,
-                    label.color = NA, fill = NA,
-                    label.padding = grid::unit(rep(0, 4), "pt")) +
-      geom_hline(data = context_points, aes(yintercept = temp)) +
-      geom_ribbon(aes(ymin = min, ymax = max),
-                  fill = "steelblue",
-                  alpha = 0.25) +
-      geom_line(color = "white") +
-      geom_point(data = extremes, aes(y = pos)) +
-      geom_richtext(data = extremes,
-                    aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
-                    nudge_y = -1,
-                    label.color = NA,
-                    # Gives us a transparent background so text pops better
-                    fill = after_scale(alpha("white", .5)),
-                    vjust = 1 ) +
-      labs(title = "Daily temperature", y = "") +
-      scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
+  context_points <- tibble(
+    label = c(glue("107{degrees}: hottest day in Pheonix, AZ"),
+              glue("-14.9{degrees}: coldest day in Fairbanks, AK")),
+    temp = c(107, -14.9)
+  )
+
+  axis_breaks <- seq(100, -10, by = -10)
+  axis_labels <- as.character(axis_breaks)
+  axis_labels[1] <- paste0(axis_labels[1], degrees, "F")
+  ggplot(temp_data, aes(x = date, y = avg)) +
+    geom_text(
+      data = context_points,
+      aes(x = mdy("12-25-2000"), y = temp, label = label),
+      vjust = c(0, 1), nudge_y = c(1, -1),
+      hjust = 1, nudge_x = 2
+    ) +
+    geom_hline(data = context_points, aes(yintercept = temp)) +
+    geom_ribbon(aes(ymin = min, ymax = max),
+      fill = "steelblue",
+      alpha = 0.25
+    ) +
+    geom_line(color = "white") +
+    geom_point(data = extremes, aes(y = pos)) +
+    geom_text(
+      data = extremes,
+      aes(y = pos, label = label, hjust = ifelse(month(date) < 6, 0, 1)),
+      nudge_y = c(2, -2),
+      vjust = c(0, 1)
+    ) +
+    labs(title = "Daily temperature", y = "") +
+    scale_y_continuous(breaks = axis_breaks, labels = axis_labels)
 }
 
 # Add a nicely styled and centered label above a given input
